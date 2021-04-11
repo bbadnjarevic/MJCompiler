@@ -59,10 +59,12 @@ nonterminal ConstDecls, ConstDeclList, ConstDecl;
 nonterminal VarDecls, VarDeclList, VarDecl, VarDeclsList;
 nonterminal ClassDecl, ClassMethods, Extends;
 nonterminal MethodDecls, MethodDecl;
-nonterminal Type;
+nonterminal Type, ExtendedType;
+nonterminal Designator, RepeatedDesignator;
+nonterminal Assignop, Relop, Addop, Mulop;
 
 /* PROGRAM */
-Program ::= (Program) PROG IDENT DeclarationsList LBRACE MethodDecls RBRACE
+Program ::= (Program) PROG IDENT DeclarationsList LBRACE /*METHOD DECLS*/ RBRACE
 ;
 
 DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecls
@@ -120,11 +122,12 @@ Extends ::= (ClassExtends) EXTENDS Type
 			(NoExtends)
 			;
 
-ClassMethods ::= (ClassMethodsList) LBRACE  RBRACE
+ClassMethods ::= (ClassMethodsList) LBRACE /* METHOD DECLS */ RBRACE
 			|
 			(NoClassMethods)
 			;
 
 Type ::= (Type) IDENT:typeName;
+
 
 
