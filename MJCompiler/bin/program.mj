@@ -1,0 +1,13 @@
+program MJProgram
+	const int c = 51, y = 'a';
+	tip b;
+	const char c = 12;
+	class Table {
+		int pos[], neg[];
+		{
+		}
+	}
+	int x;
+	class C { }
+{
+}

@@ -1,0 +1,130 @@
+
+
+package rs.ac.bg.etf.pp1;
+
+import java_cup.runtime.*;
+import org.apache.log4j.*;
+import rs.ac.bg.etf.pp1.ast.*;
+
+parser code {:
+
+	Logger log = Logger.getLogger(getClass());
+   
+   
+    // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
+     
+    public void report_fatal_error(String message, Object info) throws java.lang.Exception {
+      done_parsing();
+      report_error(message, info);
+    }
+  
+    public void syntax_error(Symbol cur_token) {
+        report_error("\nSintaksna greska", cur_token);
+    }
+  
+    public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
+        report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token);
+    }
+
+    public void report_error(String message, Object info) {
+    	StringBuilder msg = new StringBuilder(message); 
+    	if (info instanceof Symbol)
+            msg.append (" na liniji ").append(((Symbol)info).left);
+        log.error(msg.toString());
+    }
+
+
+:}
+
+
+scan with {:
+	Symbol s = this.getScanner().next_token();
+	if (s != null && s.value != null) 
+		log.info(s.toString() + " " + s.value.toString());
+	return s;
+:}
+
+terminal PROG, RETURN, PRINT, VOID, CONST, CLASS;
+terminal SEMI, COMMA, EQUAL, PLUS;
+terminal LPAREN, RPAREN, LBRACE, RBRACE, LSQUARE, RSQUARE;
+terminal Integer NUMBER;
+terminal String IDENT;
+terminal IF, ELSE;
+terminal NUM_CONST, CHAR_CONST, BOOL_CONST;
+terminal CONTINUE, WHILE, READ, NEW, ENUM, SWITCH, BREAK, EXTENDS, CASE, DO;
+terminal COLON, GTE, LT, DOT, LTE, DIV, MINUS, MOD, MUL, GT, QUESTION, INC, NEQ, AND, EQ, OR, DEC;
+
+nonterminal Program, DeclarationsList;
+nonterminal ConstDecls, ConstDeclList, ConstDecl;
+nonterminal VarDecls, VarDeclList, VarDecl, VarDeclsList;
+nonterminal ClassDecl, ClassMethods, Extends;
+nonterminal MethodDecls, MethodDecl;
+nonterminal Type;
+
+/* PROGRAM */
+Program ::= (Program) PROG IDENT DeclarationsList LBRACE MethodDecls RBRACE
+;
+
+DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecls
+				|
+				(VarDeclarationsList) DeclarationsList VarDecls
+				|
+				(ClassDeclarationsList) DeclarationsList ClassDecl
+				|
+				(NoDecls) /* epsilon */
+				;
+
+				
+/* CONST DECL */
+ConstDecls ::= (ConstDecls) CONST Type ConstDeclList SEMI
+;
+
+ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDecl
+				|
+				(OneElemConstDeclList) ConstDecl
+				;
+				
+ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUM_CONST
+			|
+			(CharConstDecl) IDENT:constName EQUAL CHAR_CONST
+			|
+			(BoolConstDecl) IDENT:constName EQUAL BOOL_CONST
+			;	
+
+
+/* VAR DECL */
+VarDecls ::= (VarDecls) Type:varType VarDeclList SEMI;
+
+VarDeclsList ::= (VarDeclsList_) VarDeclsList VarDecls
+			|
+			(NoVarDecls) /* epsilon */
+			;
+			
+VarDeclList ::= (VarDeclarationlList) VarDeclList COMMA VarDecl
+			|
+			(OneElemVarDeclList) VarDecl
+			;
+
+VarDecl ::= (ArrayDeclaration) IDENT:varName LSQUARE RSQUARE
+			|
+			(VarDeclaration) IDENT:varName 
+			;
+
+			
+/* CLASS DECL */
+ClassDecl ::= (ClassDecl) CLASS IDENT:className Extends LBRACE VarDeclsList ClassMethods RBRACE
+;
+
+Extends ::= (ClassExtends) EXTENDS Type
+			|
+			(NoExtends)
+			;
+
+ClassMethods ::= (ClassMethodsList) LBRACE  RBRACE
+			|
+			(NoClassMethods)
+			;
+
+Type ::= (Type) IDENT:typeName;
+
+
