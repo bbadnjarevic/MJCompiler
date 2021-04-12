@@ -5,9 +5,16 @@ program MJProgram
 	class Table {
 		int pos[], neg[];
 		{
+			void main(int a[], char b) {
+				continue;
+			}
 		}
 	}
 	int x;
-	class C { }
+	class C { 
+	}
 {
+	int method() {
+		continue;
+	}
 }

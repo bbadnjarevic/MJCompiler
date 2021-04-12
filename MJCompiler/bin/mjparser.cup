@@ -59,12 +59,17 @@ nonterminal ConstDecls, ConstDeclList, ConstDecl;
 nonterminal VarDecls, VarDeclList, VarDecl, VarDeclsList;
 nonterminal ClassDecl, ClassMethods, Extends;
 nonterminal MethodDecls, MethodDecl;
+nonterminal FormPars, ActPars, PossibleActPars;
+nonterminal StatementList, Statement, CaseList;
 nonterminal Type, ExtendedType;
-nonterminal Designator, RepeatedDesignator;
+nonterminal Designator, RepeatedDesignator, DesignatorStatement, DesignatorOptions;
 nonterminal Assignop, Relop, Addop, Mulop;
+nonterminal Term, Terms;
+nonterminal Factor, Expr;
+nonterminal Condition, CondTerm, CondFact;
 
 /* PROGRAM */
-Program ::= (Program) PROG IDENT DeclarationsList LBRACE /*METHOD DECLS*/ RBRACE
+Program ::= (Program) PROG IDENT DeclarationsList LBRACE MethodDecls RBRACE
 ;
 
 DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecls
@@ -122,12 +127,165 @@ Extends ::= (ClassExtends) EXTENDS Type
 			(NoExtends)
 			;
 
-ClassMethods ::= (ClassMethodsList) LBRACE /* METHOD DECLS */ RBRACE
+ClassMethods ::= (ClassMethodsList) LBRACE MethodDecls RBRACE
 			|
 			(NoClassMethods)
 			;
 
+/* TYPE */
 Type ::= (Type) IDENT:typeName;
 
+ExtendedType ::= (BasicType) Type 
+				|
+				(VoidType) VOID
+				;
 
 
+/* METHOD DECL */
+MethodDecls ::= (MethodDeclList) MethodDecls MethodDecl
+			|
+			(NoMethodDecls)
+			;
+			
+MethodDecl ::= (MethodDeclWithParms) ExtendedType IDENT LPAREN FormPars RPAREN VarDeclsList LBRACE StatementList RBRACE
+			|
+			(MethodDeclNoParms) ExtendedType IDENT LPAREN RPAREN VarDeclsList LBRACE StatementList RBRACE
+			;
+
+FormPars ::= (FormParsList) FormPars COMMA Type VarDecl
+			|
+			(FormParsElem) Type VarDecl
+			;
+
+/* STATEMENTS */ 
+StatementList ::= (StmtList) StatementList Statement
+			 	| 
+			 	(NoStmt) /* epsilon */
+			 	;
+			 	
+Statement ::= (DesignatorStmt) DesignatorStatement SEMI 
+			|
+			(DoWhileStmt) DO Statement WHILE LPAREN Condition RPAREN SEMI
+			|
+			(SwitchStmt) SWITCH LPAREN Expr RPAREN LBRACE /* CaseList */ RBRACE
+			|
+			(BreakStmt) BREAK SEMI
+			|
+			(ContinueStmt) CONTINUE SEMI
+			|
+			(ReturnVoid) RETURN SEMI
+			|
+			(ReturnStmt) RETURN Expr SEMI
+			|
+			(ReadStmt) READ LPAREN Designator RPAREN SEMI
+			|
+			(PrintStmt) PRINT LPAREN Expr RPAREN SEMI
+			|
+			(PrintConstStmt) PRINT LPAREN Expr COMMA NUM_CONST RPAREN SEMI
+			|
+			(MoreStmts) LBRACE StatementList RBRACE
+			;
+			
+CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
+			|
+			(NoCase) /* epsilon */
+			;
+			
+/* EXPR */
+Expr ::= (BasicTerms) Terms
+		|
+		(NegTerms) MINUS Terms
+		;
+		
+/* TERM */
+Terms ::= (TermList) Terms Addop Term
+		|
+		(OneTerm) Term
+		;
+		
+Term ::= (FactorList) Term Mulop Factor
+		|
+		(OneFactor) Factor
+		;
+		
+/* FACTOR */
+Factor ::= (DesignatorFactor) Designator PossibleActPars
+		|
+		(NumFactor) NUM_CONST
+		|
+		(CharFactor) CHAR_CONST
+		|
+		(BoolFactor) BOOL_CONST
+		|
+		(NewFactor) NEW Type
+		|
+		(NewFactorArray) NEW Type LSQUARE Expr RSQUARE
+		|
+		(ExprFactor) LPAREN Expr RPAREN
+		;
+			
+/* DESIGNATOR */
+DesignatorStatement ::= (DesignatorStatement) Designator DesignatorOptions
+;
+
+DesignatorOptions ::= (BasicExpr) Assignop Expr
+					|
+					(WithActPars) LPAREN ActPars RPAREN
+					|
+					(EmptyParens) LPAREN RPAREN
+					|
+					(Increase) INC
+					|
+					(Decrease) DEC
+					;
+		
+Designator ::= (Designator) IDENT RepeatedDesignator
+;
+
+RepeatedDesignator ::= (DotDesignator) RepeatedDesignator DOT IDENT
+					|
+					(IndexDesignator) RepeatedDesignator LSQUARE Expr RSQUARE
+					|
+					(NoDesignator)
+					;
+					
+/* ACT PARS */
+ActPars ::= (ActParsList) ActPars COMMA Expr
+		|
+		(OneExpr) Expr
+		;
+		
+PossibleActPars ::= LPAREN ActPars RPAREN | LPAREN RPAREN | ;
+/* ["(" [ActPars] ")"] */
+		
+
+/* CONDITION */
+Condition ::= (CondTerms) Condition OR CondTerm
+			|
+			(OneCondTerm) CondTerm
+			;
+			
+CondTerm ::= (CondFacts) CondTerm AND CondFact
+			|
+			(OneCondFact) CondFact
+			;
+			
+CondFact ::= (CondFact1Expr) Expr
+			|
+			(CondFact2Expr) Expr Relop Expr
+			;
+			
+/* OPERATIONS */
+Assignop ::= EQUAL
+;
+
+Relop ::= EQ | NEQ | GT | GTE | LT | LTE
+;
+
+Addop ::= PLUS | MINUS
+;
+
+Mulop ::= MUL | DIV | MOD
+;
+
+			
