@@ -58,6 +58,7 @@ import java_cup.runtime.Symbol;
 "extends" 	{ return new_symbol(sym.EXTENDS, yytext()); }
 "continue" 	{ return new_symbol(sym.CONTINUE, yytext()); }
 "case" 		{ return new_symbol(sym.CASE, yytext()); }
+"yield"		{ return new_symbol(sym.YIELD, yytext()); }
 
 
 // Tokens
