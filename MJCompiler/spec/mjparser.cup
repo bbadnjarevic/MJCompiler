@@ -116,9 +116,9 @@ VarList ::= (VariableList) VarList COMMA Var
 			;
 
 Var ::= (ArrayDeclaration) IDENT:varName LSQUARE RSQUARE
-			|
-			(VarDeclaration) IDENT:varName 
-			;
+		|
+		(VarDeclaration) IDENT:varName 
+		;
 
 			
 /* CLASS DECL */

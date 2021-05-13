@@ -51,12 +51,12 @@ terminal Integer NUMBER;
 terminal String IDENT;
 terminal IF, ELSE;
 terminal NUM_CONST, CHAR_CONST, BOOL_CONST;
-terminal CONTINUE, WHILE, READ, NEW, ENUM, SWITCH, BREAK, EXTENDS, CASE, DO;
+terminal CONTINUE, WHILE, READ, NEW, ENUM, SWITCH, BREAK, EXTENDS, CASE, YIELD, DO;
 terminal COLON, GTE, LT, DOT, LTE, DIV, MINUS, MOD, MUL, GT, QUESTION, INC, NEQ, AND, EQ, OR, DEC;
 
 nonterminal Program, DeclarationsList;
-nonterminal ConstDecls, ConstDeclList, ConstDecl;
-nonterminal VarDecls, VarDeclList, VarDecl, VarDeclsList;
+nonterminal ConstDecl, ConstDeclList, ConstDeclElem;
+nonterminal VarDecl, VarList, Var, VarDeclList;
 nonterminal ClassDecl, ClassMethods, Extends;
 nonterminal MethodDecls, MethodDecl;
 nonterminal FormPars, ActPars, PossibleActPars;
@@ -68,13 +68,16 @@ nonterminal Term, Terms;
 nonterminal Factor, Expr;
 nonterminal Condition, CondTerm, CondFact;
 
+precedence nonassoc ELSE;
+precedence nonassoc IF;
+
 /* PROGRAM */
 Program ::= (Program) PROG IDENT DeclarationsList LBRACE MethodDecls RBRACE
 ;
 
-DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecls
+DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecl
 				|
-				(VarDeclarationsList) DeclarationsList VarDecls
+				(VarDeclarationsList) DeclarationsList VarDecl
 				|
 				(ClassDeclarationsList) DeclarationsList ClassDecl
 				|
@@ -83,15 +86,15 @@ DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecls
 
 				
 /* CONST DECL */
-ConstDecls ::= (ConstDecls) CONST Type ConstDeclList SEMI
+ConstDecl ::= (ConstDecl) CONST Type ConstDeclList SEMI
 ;
 
-ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDecl
+ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDeclElem
 				|
-				(OneElemConstDeclList) ConstDecl
+				(OneElemConstDeclList) ConstDeclElem
 				;
 				
-ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUM_CONST
+ConstDeclElem ::= (NumConstDecl) IDENT:constName EQUAL NUM_CONST
 			|
 			(CharConstDecl) IDENT:constName EQUAL CHAR_CONST
 			|
@@ -100,33 +103,33 @@ ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUM_CONST
 
 
 /* VAR DECL */
-VarDecls ::= (VarDecls) Type:varType VarDeclList SEMI;
+VarDecl ::= (VarDecl) Type:varType VarList SEMI;
 
-VarDeclsList ::= (VarDeclsList_) VarDeclsList VarDecls
+VarDeclList ::= (VarDeclarationList) VarDeclList VarDecl
 			|
 			(NoVarDecls) /* epsilon */
 			;
-			
-VarDeclList ::= (VarDeclarationlList) VarDeclList COMMA VarDecl
+
+VarList ::= (VariableList) VarList COMMA Var
 			|
-			(OneElemVarDeclList) VarDecl
+			(OneElemVarList) Var
 			;
 
-VarDecl ::= (ArrayDeclaration) IDENT:varName LSQUARE RSQUARE
-			|
-			(VarDeclaration) IDENT:varName 
-			;
+Var ::= (ArrayDeclaration) IDENT:varName LSQUARE RSQUARE
+		|
+		(VarDeclaration) IDENT:varName 
+		;
 
 			
 /* CLASS DECL */
-ClassDecl ::= (ClassDecl) CLASS IDENT:className Extends LBRACE VarDeclsList ClassMethods RBRACE
+ClassDecl ::= (ClassDecl) CLASS IDENT:className Extends LBRACE VarDeclList ClassMethods RBRACE
 ;
 
 Extends ::= (ClassExtends) EXTENDS Type
 			|
 			(NoExtends)
 			;
-
+			
 ClassMethods ::= (ClassMethodsList) LBRACE MethodDecls RBRACE
 			|
 			(NoClassMethods)
@@ -147,14 +150,14 @@ MethodDecls ::= (MethodDeclList) MethodDecls MethodDecl
 			(NoMethodDecls)
 			;
 			
-MethodDecl ::= (MethodDeclWithParms) ExtendedType IDENT LPAREN FormPars RPAREN VarDeclsList LBRACE StatementList RBRACE
+MethodDecl ::= (MethodDeclWithParms) ExtendedType IDENT LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
 			|
-			(MethodDeclNoParms) ExtendedType IDENT LPAREN RPAREN VarDeclsList LBRACE StatementList RBRACE
+			(MethodDeclNoParms) ExtendedType IDENT LPAREN RPAREN VarDeclList LBRACE StatementList RBRACE
 			;
 
-FormPars ::= (FormParsList) FormPars COMMA Type VarDecl
+FormPars ::= (FormParsList) FormPars COMMA Type Var
 			|
-			(FormParsElem) Type VarDecl
+			(FormParsElem) Type Var
 			;
 
 /* STATEMENTS */ 
@@ -165,9 +168,15 @@ StatementList ::= (StmtList) StatementList Statement
 			 	
 Statement ::= (DesignatorStmt) DesignatorStatement SEMI 
 			|
+			(IfStmt) IF LPAREN Condition RPAREN Statement
+			|
+			(IfElseStmt) IF LPAREN Condition RPAREN Statement ELSE Statement
+			|
 			(DoWhileStmt) DO Statement WHILE LPAREN Condition RPAREN SEMI
 			|
-			(SwitchStmt) SWITCH LPAREN Expr RPAREN LBRACE /* CaseList */ RBRACE
+			(SwitchStmt) SWITCH LPAREN Expr RPAREN LBRACE CaseList RBRACE
+			|
+			(YieldStmt) YIELD Expr SEMI
 			|
 			(BreakStmt) BREAK SEMI
 			|
@@ -209,7 +218,9 @@ Term ::= (FactorList) Term Mulop Factor
 		;
 		
 /* FACTOR */
-Factor ::= (DesignatorFactor) Designator PossibleActPars
+Factor ::= (DesignatorFactor) Designator
+		|
+		(DesignatorFactorActPars) Designator PossibleActPars
 		|
 		(NumFactor) NUM_CONST
 		|
@@ -230,24 +241,18 @@ DesignatorStatement ::= (DesignatorStatement) Designator DesignatorOptions
 
 DesignatorOptions ::= (BasicExpr) Assignop Expr
 					|
-					(WithActPars) LPAREN ActPars RPAREN
-					|
-					(EmptyParens) LPAREN RPAREN
+					(DesignatorActPars) PossibleActPars
 					|
 					(Increase) INC
 					|
 					(Decrease) DEC
 					;
 		
-Designator ::= (Designator) IDENT RepeatedDesignator
+Designator ::= (DesignatorJustIdent) IDENT
+				|
+				(DesignatorWithExpr) IDENT LSQUARE Expr RSQUARE
 ;
 
-RepeatedDesignator ::= (DotDesignator) RepeatedDesignator DOT IDENT
-					|
-					(IndexDesignator) RepeatedDesignator LSQUARE Expr RSQUARE
-					|
-					(NoDesignator)
-					;
 					
 /* ACT PARS */
 ActPars ::= (ActParsList) ActPars COMMA Expr
@@ -255,8 +260,11 @@ ActPars ::= (ActParsList) ActPars COMMA Expr
 		(OneExpr) Expr
 		;
 		
-PossibleActPars ::= LPAREN ActPars RPAREN | LPAREN RPAREN | ;
-/* ["(" [ActPars] ")"] */
+PossibleActPars ::= (WithActPars) LPAREN ActPars RPAREN 
+					|
+					(WithoutActPars) LPAREN RPAREN 
+					;
+/* "(" [ActPars] ")" */
 		
 
 /* CONDITION */
@@ -276,16 +284,32 @@ CondFact ::= (CondFact1Expr) Expr
 			;
 			
 /* OPERATIONS */
-Assignop ::= EQUAL
+Assignop ::= (Assignop) EQUAL
 ;
 
-Relop ::= EQ | NEQ | GT | GTE | LT | LTE
+Relop ::= (Equal) EQ 
+		|
+		(NotEqual) NEQ 
+		| 
+		(GreaterThen) GT 
+		|
+		(GreaterThenEqual) GTE 
+		|
+		(LessThen) LT 
+		|
+		(LessThenEqual) LTE
 ;
 
-Addop ::= PLUS | MINUS
+Addop ::= (Plus) PLUS 
+		|
+		(Minus) MINUS
 ;
 
-Mulop ::= MUL | DIV | MOD
+Mulop ::= (Mul) MUL 
+		|
+		(Div) DIV 
+		|
+		(Mod) MOD
 ;
 
 			

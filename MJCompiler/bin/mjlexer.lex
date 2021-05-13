@@ -9,13 +9,24 @@ import java_cup.runtime.Symbol;
 
 	// ukljucivanje informacije o poziciji tokena
 	private Symbol new_symbol(int type) {
+		error_handler();
 		return new Symbol(type, yyline+1, yycolumn);
 	}
 	
 	// ukljucivanje informacije o poziciji tokena
 	private Symbol new_symbol(int type, Object value) {
+		error_handler();
 		return new Symbol(type, yyline+1, yycolumn, value);
 	}
+	
+	private void error_handler() {
+		if (error_string.length() > 0) {
+			System.err.println("Leksicka greska (" + error_string + ") u liniji "+(error_line+1) + " na poziciji: " + (error_column+1 - error_string.length()));
+			error_string = "";
+		}
+	}
+	String error_string = "";
+	int error_line, error_column;
 
 %}
 
@@ -58,13 +69,14 @@ import java_cup.runtime.Symbol;
 "extends" 	{ return new_symbol(sym.EXTENDS, yytext()); }
 "continue" 	{ return new_symbol(sym.CONTINUE, yytext()); }
 "case" 		{ return new_symbol(sym.CASE, yytext()); }
+"yield"		{ return new_symbol(sym.YIELD, yytext()); }
 
 
 // Tokens
 ("true"|"false")				{ return new_symbol(sym.BOOL_CONST, yytext().equals("true")); }
 [0-9]+  						{ return new_symbol(sym.NUM_CONST, new Integer (yytext())); }
 '.'								{ return new_symbol(sym.CHAR_CONST, yytext()); }
-([a-z]|[A-Z])[a-z|A-Z|0-9|_]* 	{ return new_symbol(sym.IDENT, yytext()); }
+([a-z]|[A-Z])[a-zA-Z0-9_]* 		{ return new_symbol(sym.IDENT, yytext()); }
 
 
 // Operators
@@ -104,5 +116,6 @@ import java_cup.runtime.Symbol;
 
 
 // Error
-.	{ System.err.println("Leksicka greska ("+yytext()+") u liniji "+(yyline+1)); }
+.	{ error_string += yytext(); error_line = yyline+1; error_column = yycolumn; }
+
 
