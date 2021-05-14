@@ -21,12 +21,13 @@ import java_cup.runtime.Symbol;
 	
 	private void error_handler() {
 		if (error_string.length() > 0) {
-			System.err.println("Leksicka greska (" + error_string + ") u liniji "+(error_line+1) + " na poziciji: " + (error_column+1 - error_string.length()));
+			System.err.println("Leksicka greska (" + error_string + ") u liniji "+(error_line) + " na poziciji: " + (error_column+1 - error_string.length()));
 			error_string = "";
 		}
 	}
 	String error_string = "";
 	int error_line, error_column;
+	boolean errors = false;
 
 %}
 
@@ -116,6 +117,6 @@ import java_cup.runtime.Symbol;
 
 
 // Error
-.	{ error_string += yytext(); error_line = yyline+1; error_column = yycolumn; }
+.	{ errors = true; error_string += yytext(); error_line = yyline+1; error_column = yycolumn; }
 
 

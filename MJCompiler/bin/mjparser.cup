@@ -66,7 +66,7 @@ nonterminal Designator, RepeatedDesignator, DesignatorStatement, DesignatorOptio
 nonterminal Assignop, Relop, Addop, Mulop;
 nonterminal Term, Terms;
 nonterminal Factor, Expr;
-nonterminal Condition, CondTerm, CondFact;
+nonterminal Condition, IfCondition, CondTerm, CondFact;
 
 precedence nonassoc ELSE;
 precedence nonassoc IF;
@@ -118,6 +118,8 @@ VarList ::= (VariableList) VarList COMMA Var
 Var ::= (ArrayDeclaration) IDENT:varName LSQUARE RSQUARE
 		|
 		(VarDeclaration) IDENT:varName 
+		|
+		(ErrorVar) error:e {: parser.report_error("Izvrsen oporavak od greske na linji " + eleft + ", pri deklerisanju globalne promenljive", null); :}
 		;
 
 			
@@ -159,7 +161,7 @@ FormPars ::= (FormParsList) FormPars COMMA Type Var
 			|
 			(FormParsElem) Type Var
 			|
-			(FormParsError) error {: parser.report_error("FormParsError","WRONG"); :}
+			(FormParsError) error:e {: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", pri deklaraciji formalnog parametra funkcije", null); :}
 			;
 
 /* STATEMENTS */ 
@@ -168,15 +170,11 @@ StatementList ::= (StmtList) StatementList Statement
 			 	(NoStmt) /* epsilon */
 			 	;
 			 	
-Statement ::= (DesignatorStmt) DesignatorStatement SEMI 
+Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorStmt */
 			|
-			(IfStmt) IF LPAREN Condition RPAREN Statement
+			(IfStmt) IF LPAREN IfCondition RPAREN Statement
 			|
-			(IfStmtError) IF LPAREN error RPAREN  
-			{: parser.report_error("IfStmt Condition","WRONG"); :}
-			Statement
-			|
-			(IfElseStmt) IF LPAREN Condition RPAREN Statement ELSE Statement
+			(IfElseStmt) IF LPAREN IfCondition RPAREN Statement ELSE Statement
 			|
 			(DoWhileStmt) DO Statement WHILE LPAREN Condition RPAREN SEMI
 			|
@@ -245,13 +243,16 @@ Factor ::= (DesignatorFactor) Designator
 DesignatorStatement ::= (DesignatorStatement) Designator DesignatorOptions
 ;
 
-DesignatorOptions ::= (BasicExpr) Assignop Expr
+DesignatorOptions ::= (BasicExpr) Assignop Expr	SEMI
 					|
-					(DesignatorActPars) PossibleActPars
+					(ErrorAssigning) error:e SEMI 
+					{: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod konstrukcije iskaza dodele", null); :}
 					|
-					(Increase) INC
+					(DesignatorActPars) PossibleActPars SEMI
 					|
-					(Decrease) DEC
+					(Increase) INC SEMI
+					|
+					(Decrease) DEC SEMI
 					;
 		
 Designator ::= (DesignatorJustIdent) IDENT
@@ -274,6 +275,11 @@ PossibleActPars ::= (WithActPars) LPAREN ActPars RPAREN
 		
 
 /* CONDITION */
+IfCondition ::= (JustCondition) Condition
+			|
+			(IfError) error:e {:  parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod logickog izraza unutar if konstrukcije", null); :}
+			;
+
 Condition ::= (CondTerms) Condition OR CondTerm
 			|
 			(OneCondTerm) CondTerm
