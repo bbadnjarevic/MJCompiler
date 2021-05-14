@@ -19,7 +19,7 @@ parser code {:
     }
   
     public void syntax_error(Symbol cur_token) {
-        report_error("\nSintaksna greska", cur_token);
+        report_error("Sintaksna greska", cur_token);
     }
   
     public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
@@ -39,7 +39,7 @@ parser code {:
 
 scan with {:
 	Symbol s = this.getScanner().next_token();
-	if (s != null && s.value != null) 
+	if (s != null && s.value != null)
 		log.info(s.toString() + " " + s.value.toString());
 	return s;
 :}
@@ -158,6 +158,8 @@ MethodDecl ::= (MethodDeclWithParms) ExtendedType IDENT LPAREN FormPars RPAREN V
 FormPars ::= (FormParsList) FormPars COMMA Type Var
 			|
 			(FormParsElem) Type Var
+			|
+			(FormParsError) error {: parser.report_error("FormParsError","WRONG"); :}
 			;
 
 /* STATEMENTS */ 
@@ -170,11 +172,13 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(IfStmt) IF LPAREN Condition RPAREN Statement
 			|
+			(IfStmtError) IF LPAREN error RPAREN  
+			{: parser.report_error("IfStmt Condition","WRONG"); :}
+			Statement
+			|
 			(IfElseStmt) IF LPAREN Condition RPAREN Statement ELSE Statement
 			|
 			(DoWhileStmt) DO Statement WHILE LPAREN Condition RPAREN SEMI
-			|
-			(SwitchStmt) SWITCH LPAREN Expr RPAREN LBRACE CaseList RBRACE
 			|
 			(YieldStmt) YIELD Expr SEMI
 			|
@@ -195,16 +199,18 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			(MoreStmts) LBRACE StatementList RBRACE
 			;
 			
-CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
-			|
-			(NoCase) /* epsilon */
-			;
-			
 /* EXPR */
 Expr ::= (BasicTerms) Terms
 		|
 		(NegTerms) MINUS Terms
+		|
+		(SwitchExpr) SWITCH LPAREN Expr RPAREN LBRACE CaseList RBRACE
 		;
+					
+CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
+			|
+			(NoCase) /* epsilon */
+			;
 		
 /* TERM */
 Terms ::= (TermList) Terms Addop Term

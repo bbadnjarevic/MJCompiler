@@ -18,7 +18,7 @@ class Table {
     }
 }
 Table val; {
-    void f(char ch, int a, int arg)
+    void f(char ch-, int a, int arg)
     int x; {
         x = arg;
     }
@@ -29,7 +29,7 @@ Table val; {
         val[neg] = new int[size];
         i = 0;
         do {
-            putp[](0, i);
+            putp(0, i);
             putn(0, i);
             i++;
         } while (i < size);
@@ -39,9 +39,9 @@ Table val; {
             if (x <= 0) break;
             if (0 <= x && x < size) {
                 putp(getp(x) + 1);
-            } else if (‐size < x && x < 0) {
-                putn(getn(‐x) + 1);
-            }
+            } else if (1){
+				putp();
+			}
             read(x);
         } while (true);
         print(0);
