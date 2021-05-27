@@ -1,0 +1,11 @@
+program Program
+	const int pi = 3, e = 2;
+	const bool a = true, b = false;
+	const char c = 'a';
+	bool b_arr[];
+	int array[], array2[];
+	int var1, var2;
+	oijsf a;
+{
+	int main() int x; { }
+}

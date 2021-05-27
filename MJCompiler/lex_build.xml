@@ -11,6 +11,8 @@
 				<exclude name="RuleVisitor.java"/>
 				<exclude name="MJParser.java"/>
 				<exclude name="**/ast/**" />
+				<exclude name="SemanticAnalyzer.java" />
+				<exclude name="Table.java" />
 			</fileset>
 		</delete>
 		<delete>

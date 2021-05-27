@@ -4,7 +4,7 @@ program test302
 
 const int jedan = 1;
 
-int i;
+int i, j;
 bool ibool;
 
 int niz[];
@@ -78,7 +78,26 @@ int niz[];
 		print(eol); 
 		print(inkrement(niz[2], 2));
 		
-		print(verify() ? 't' : 'f');
+		j =	switch(i){
+					case 1:
+						print(1);
+						yield 1;
+					case 3:
+						print(3);
+					case 2:
+						print(2);
+						yield 2;
+					case 4:
+						print(5);
+						i = i + 3;
+						yield 7;
+					default:
+						yield 10;
+			};
+		print(eol);
+		print(i);
+		print(eol);
+		print(j);
 	}
 }
 

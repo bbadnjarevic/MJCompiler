@@ -8,6 +8,7 @@ import rs.ac.bg.etf.pp1.ast.*;
 
 parser code {:
 
+	boolean errorDetected;
 	Logger log = Logger.getLogger(getClass());
    
    
@@ -27,6 +28,7 @@ parser code {:
     }
 
     public void report_error(String message, Object info) {
+    	errorDetected = true;
     	StringBuilder msg = new StringBuilder(message); 
     	if (info instanceof Symbol)
             msg.append (" na liniji ").append(((Symbol)info).left);
@@ -36,6 +38,9 @@ parser code {:
 
 :}
 
+init with {:
+	errorDetected = false;
+:}
 
 scan with {:
 	Symbol s = this.getScanner().next_token();
@@ -47,32 +52,38 @@ scan with {:
 terminal PROG, RETURN, PRINT, VOID, CONST, CLASS;
 terminal SEMI, COMMA, EQUAL, PLUS;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LSQUARE, RSQUARE;
-terminal Integer NUMBER;
+terminal Integer NUM_CONST;
+terminal String CHAR_CONST;
+terminal String BOOL_CONST;
 terminal String IDENT;
 terminal IF, ELSE;
-terminal NUM_CONST, CHAR_CONST, BOOL_CONST;
 terminal CONTINUE, WHILE, READ, NEW, ENUM, SWITCH, BREAK, EXTENDS, CASE, YIELD, DO;
 terminal COLON, GTE, LT, DOT, LTE, DIV, MINUS, MOD, MUL, GT, QUESTION, INC, NEQ, AND, EQ, OR, DEC;
 
-nonterminal Program, DeclarationsList;
+nonterminal DeclarationsList;
 nonterminal ConstDecl, ConstDeclList, ConstDeclElem;
 nonterminal VarDecl, VarList, Var, VarDeclList;
 nonterminal ClassDecl, ClassMethods, Extends;
-nonterminal MethodDecls, MethodDecl;
+nonterminal MethodDecls;
 nonterminal FormPars, ActPars, PossibleActPars;
 nonterminal StatementList, Statement, CaseList;
-nonterminal Type, ExtendedType;
 nonterminal Designator, RepeatedDesignator, DesignatorStatement, DesignatorOptions;
 nonterminal Assignop, Relop, Addop, Mulop;
 nonterminal Term, Terms;
 nonterminal Factor, Expr;
 nonterminal Condition, IfCondition, CondTerm, CondFact;
 
+nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type;
+
 precedence nonassoc ELSE;
 precedence nonassoc IF;
 
 /* PROGRAM */
-Program ::= (Program) PROG IDENT DeclarationsList LBRACE MethodDecls RBRACE
+Program ::= (Program) PROG ProgName DeclarationsList LBRACE MethodDecls RBRACE
+;
+
+ProgName ::= (ProgName) IDENT:name
 ;
 
 DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecl
@@ -94,11 +105,11 @@ ConstDeclList ::= (ConstDeclarationList) ConstDeclList COMMA ConstDeclElem
 				(OneElemConstDeclList) ConstDeclElem
 				;
 				
-ConstDeclElem ::= (NumConstDecl) IDENT:constName EQUAL NUM_CONST
+ConstDeclElem ::= (NumConstDecl) IDENT:constName EQUAL NUM_CONST:constVal
 			|
-			(CharConstDecl) IDENT:constName EQUAL CHAR_CONST
+			(CharConstDecl) IDENT:constName EQUAL CHAR_CONST:constVal
 			|
-			(BoolConstDecl) IDENT:constName EQUAL BOOL_CONST
+			(BoolConstDecl) IDENT:constName EQUAL BOOL_CONST:constVal
 			;	
 
 
@@ -140,11 +151,6 @@ ClassMethods ::= (ClassMethodsList) LBRACE MethodDecls RBRACE
 /* TYPE */
 Type ::= (Type) IDENT:typeName;
 
-ExtendedType ::= (BasicType) Type 
-				|
-				(VoidType) VOID
-				;
-
 
 /* METHOD DECL */
 MethodDecls ::= (MethodDeclList) MethodDecls MethodDecl
@@ -152,10 +158,15 @@ MethodDecls ::= (MethodDeclList) MethodDecls MethodDecl
 			(NoMethodDecls)
 			;
 			
-MethodDecl ::= (MethodDeclWithParms) ExtendedType IDENT LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
+MethodDecl ::= (MethodDeclWithParms) MethodTypeName LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
 			|
-			(MethodDeclNoParms) ExtendedType IDENT LPAREN RPAREN VarDeclList LBRACE StatementList RBRACE
+			(MethodDeclNoParms) MethodTypeName LPAREN RPAREN VarDeclList LBRACE StatementList RBRACE
 			;
+			
+MethodTypeName ::= (NonVoidMethod) Type IDENT:name
+				|
+				(VoidMethod) VOID IDENT:name
+;
 
 FormPars ::= (FormParsList) FormPars COMMA Type Var
 			|
