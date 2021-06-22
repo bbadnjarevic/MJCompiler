@@ -32,7 +32,7 @@ int niz[];
 		i = 1;
 	}
 	
-	void main()
+	void main(int aisd)
 	{
 		sum(jedan, inkrement(jedan, i, j));
 		method();

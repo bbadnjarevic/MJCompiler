@@ -76,6 +76,7 @@ import rs.etf.pp1.symboltable.concepts.Struct;
 public class SemanticAnalyzer extends VisitorAdaptor {
 	Obj currentMethod = null;
 	boolean returnFound = false;
+	boolean mainFound = false;
 	boolean errorDetected = false;
 	int nVars;
 	int paramCnt = 0;
@@ -90,16 +91,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	public boolean passed() {
 		return !errorDetected;
-	}
-
-	// Reporting
-	public void report_error(String message, SyntaxNode info) {
-		errorDetected = true;
-//		StringBuilder msg = new StringBuilder(message);
-//		int line = (info == null) ? 0 : info.getLine();
-//		if (line != 0)
-//			msg.append(" na liniji ").append(line);
-		log.error(message);
 	}
 
 	private String getStructString(Struct structToVisit) {
@@ -173,7 +164,23 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 		return output.toString();
 	}
+	
+	// Reporting
+	public void report_error(String message, SyntaxNode info) {
+		errorDetected = true;
+//		StringBuilder msg = new StringBuilder(message);
+//		int line = (info == null) ? 0 : info.getLine();
+//		if (line != 0)
+//			msg.append(" na liniji ").append(line);
+		log.error(message);
+	}
 
+	public void report_error(int line, String msg) {
+		errorDetected = true;
+		String message = "Greska na liniji %d: " + msg;
+		log.error(String.format(message, line));
+	}
+	
 	public void report_info(String message, SyntaxNode info) {
 		StringBuilder msg = new StringBuilder(message);
 		int line = (info == null) ? 0 : info.getLine();
@@ -182,18 +189,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		log.info(msg.toString());
 	}
 
-	public void report_error(int line, String msg) {
-		errorDetected = true;
-		String message = "Greska na liniji %d: " + msg;
-		log.error(String.format(message, line));
-	}
-
+	
 	// Program ::= (Program) PROG ProgName DeclarationsList LBRACE MethodDecls
 	// RBRACE
 	public void visit(Program program) {
 		nVars = Table.currentScope.getnVars();
 		Table.chainLocalSymbols(program.getProgName().obj);
 		Table.closeScope();
+		
+		if (!mainFound)
+			report_error("Mora postojati main metoda tipa void i bez argumenata!", null);
 	}
 
 	public void visit(ProgName progName) {
@@ -297,6 +302,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	// LBRACE StatementList RBRACE
 	public void visit(MethodDeclNoParms methodDecl) {
 		handleMethodEnd(methodDecl);
+		Obj m = methodDecl.getMethodTypeName().obj;
+		if (m.getType() == Table.noType && m.getName().equals("main"))
+			mainFound = true;
 	}
 
 	public void visit(NonVoidMethod method) {
