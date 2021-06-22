@@ -71,11 +71,11 @@ import java_cup.runtime.Symbol;
 "continue" 	{ return new_symbol(sym.CONTINUE, yytext()); }
 "case" 		{ return new_symbol(sym.CASE, yytext()); }
 "yield"		{ return new_symbol(sym.YIELD, yytext()); }
-
+"default"	{ return new_symbol(sym.DEFAULT, yytext()); }
 
 // Tokens
 ("true"|"false")				{ return new_symbol(sym.BOOL_CONST, yytext()); }
-[0-9]+  						{ return new_symbol(sym.NUM_CONST, new Integer (yytext())); }
+[0-9]+  						{ return new_symbol(sym.NUM_CONST, Integer.parseInt(yytext())); }
 '.'								{ return new_symbol(sym.CHAR_CONST, yytext()); }
 ([a-z]|[A-Z])[a-zA-Z0-9_]* 		{ return new_symbol(sym.IDENT, yytext()); }
 

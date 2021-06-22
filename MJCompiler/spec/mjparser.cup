@@ -49,35 +49,33 @@ scan with {:
 	return s;
 :}
 
-terminal PROG, RETURN, PRINT, VOID, CONST, CLASS;
+terminal PROG,  PRINT, VOID, CONST, CLASS;
 terminal SEMI, COMMA, EQUAL, PLUS;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LSQUARE, RSQUARE;
 terminal Integer NUM_CONST;
 terminal String CHAR_CONST;
 terminal String BOOL_CONST;
 terminal String IDENT;
+terminal String RETURN;
 terminal IF, ELSE;
-terminal CONTINUE, WHILE, READ, NEW, ENUM, SWITCH, BREAK, EXTENDS, CASE, YIELD, DO;
+terminal CONTINUE, WHILE, READ, NEW, ENUM, SWITCH, BREAK, EXTENDS, CASE, YIELD, DEFAULT, DO;
 terminal COLON, GTE, LT, DOT, LTE, DIV, MINUS, MOD, MUL, GT, QUESTION, INC, NEQ, AND, EQ, OR, DEC;
 
 nonterminal DeclarationsList;
 nonterminal ConstDecl, ConstDeclList, ConstDeclElem;
-nonterminal VarDecl, VarList, Var, VarDeclList;
+nonterminal VarDecl, VarList, VarDeclList;
 nonterminal ClassDecl, ClassMethods, Extends;
 nonterminal MethodDecls;
 nonterminal FormPars, ActPars, PossibleActPars;
-nonterminal StatementList, Statement, CaseList;
-nonterminal Designator, RepeatedDesignator, DesignatorStatement, DesignatorOptions;
-nonterminal Assignop, Relop, Addop, Mulop;
-nonterminal Term, Terms;
-nonterminal Factor, Expr;
-nonterminal Condition, IfCondition, CondTerm, CondFact;
+nonterminal StatementList, Statement, CaseList, DefaultCase;
+nonterminal RepeatedDesignator, DesignatorStatement, DesignatorOptions;
+nonterminal Assignop, Addop, Mulop;
+nonterminal IfCondition;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, FuncDesignator, Designator, Var, Relop;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Expr, Terms, Term, Factor, Condition, CondTerm, CondFact;
 
-precedence nonassoc ELSE;
-precedence nonassoc IF;
+precedence left ELSE;
 
 /* PROGRAM */
 Program ::= (Program) PROG ProgName DeclarationsList LBRACE MethodDecls RBRACE
@@ -135,7 +133,7 @@ Var ::= (ArrayDeclaration) IDENT:varName LSQUARE RSQUARE
 
 			
 /* CLASS DECL */
-ClassDecl ::= (ClassDecl) CLASS IDENT:className Extends LBRACE VarDeclList ClassMethods RBRACE
+ClassDecl ::= (ClassDecl) CLASS IDENT:name Extends LBRACE VarDeclList ClassMethods RBRACE
 ;
 
 Extends ::= (ClassExtends) EXTENDS Type
@@ -195,7 +193,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorSt
 			|
 			(ContinueStmt) CONTINUE SEMI
 			|
-			(ReturnVoid) RETURN SEMI
+			(ReturnVoid) RETURN:ret SEMI
 			|
 			(ReturnStmt) RETURN Expr SEMI
 			|
@@ -213,13 +211,16 @@ Expr ::= (BasicTerms) Terms
 		|
 		(NegTerms) MINUS Terms
 		|
-		(SwitchExpr) SWITCH LPAREN Expr RPAREN LBRACE CaseList RBRACE
+		(SwitchExpr) SWITCH LPAREN Expr RPAREN LBRACE CaseList DefaultCase RBRACE
 		;
 					
 CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
 			|
 			(NoCase) /* epsilon */
 			;
+			
+DefaultCase ::= (DefaultCase) DEFAULT COLON StatementList
+;
 		
 /* TERM */
 Terms ::= (TermList) Terms Addop Term
@@ -235,7 +236,7 @@ Term ::= (FactorList) Term Mulop Factor
 /* FACTOR */
 Factor ::= (DesignatorFactor) Designator
 		|
-		(DesignatorFactorActPars) Designator PossibleActPars
+		(DesignatorFactorActPars) FuncDesignator PossibleActPars
 		|
 		(NumFactor) NUM_CONST
 		|
@@ -251,24 +252,24 @@ Factor ::= (DesignatorFactor) Designator
 		;
 			
 /* DESIGNATOR */
-DesignatorStatement ::= (DesignatorStatement) Designator DesignatorOptions
-;
 
-DesignatorOptions ::= (BasicExpr) Assignop Expr	SEMI
+DesignatorStatement ::= (Assignement) Designator Assignop Expr SEMI
 					|
-					(ErrorAssigning) error:e SEMI 
+					(ErrorAssigning) Designator error:e SEMI 
 					{: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod konstrukcije iskaza dodele", null); :}
 					|
-					(DesignatorActPars) PossibleActPars SEMI
+					(DesignatorActPars) FuncDesignator PossibleActPars SEMI
 					|
-					(Increase) INC SEMI
+					(Increase) Designator INC SEMI
 					|
-					(Decrease) DEC SEMI
+					(Decrease) Designator DEC SEMI
 					;
+					
+FuncDesignator ::= (FuncDesignator) Designator;
 		
-Designator ::= (DesignatorJustIdent) IDENT
+Designator ::= (DesignatorJustIdent) IDENT:name
 				|
-				(DesignatorWithExpr) IDENT LSQUARE Expr RSQUARE
+				(DesignatorWithExpr) IDENT:name LSQUARE Expr RSQUARE
 ;
 
 					
