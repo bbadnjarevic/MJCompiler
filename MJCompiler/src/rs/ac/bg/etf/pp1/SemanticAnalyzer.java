@@ -1,6 +1,5 @@
 package rs.ac.bg.etf.pp1;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,84 +7,24 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import rs.ac.bg.etf.pp1.ast.ActParsList;
-import rs.ac.bg.etf.pp1.ast.ArrayDeclaration;
-import rs.ac.bg.etf.pp1.ast.Assignement;
-import rs.ac.bg.etf.pp1.ast.BasicTerms;
-import rs.ac.bg.etf.pp1.ast.BoolConstDecl;
-import rs.ac.bg.etf.pp1.ast.BoolFactor;
-import rs.ac.bg.etf.pp1.ast.CharConstDecl;
-import rs.ac.bg.etf.pp1.ast.CharFactor;
-import rs.ac.bg.etf.pp1.ast.CondFact1Expr;
-import rs.ac.bg.etf.pp1.ast.CondFact2Expr;
-import rs.ac.bg.etf.pp1.ast.CondFacts;
-import rs.ac.bg.etf.pp1.ast.CondTerms;
-import rs.ac.bg.etf.pp1.ast.ConstDecl;
-import rs.ac.bg.etf.pp1.ast.Decrease;
-import rs.ac.bg.etf.pp1.ast.Designator;
-import rs.ac.bg.etf.pp1.ast.DesignatorActPars;
-import rs.ac.bg.etf.pp1.ast.DesignatorFactor;
-import rs.ac.bg.etf.pp1.ast.DesignatorFactorActPars;
-import rs.ac.bg.etf.pp1.ast.DesignatorJustIdent;
-import rs.ac.bg.etf.pp1.ast.DesignatorStatement;
-import rs.ac.bg.etf.pp1.ast.DesignatorStmt;
-import rs.ac.bg.etf.pp1.ast.DesignatorWithExpr;
-import rs.ac.bg.etf.pp1.ast.Equal;
-import rs.ac.bg.etf.pp1.ast.ExprFactor;
-import rs.ac.bg.etf.pp1.ast.FactorList;
-import rs.ac.bg.etf.pp1.ast.FormParsElem;
-import rs.ac.bg.etf.pp1.ast.FormParsList;
-import rs.ac.bg.etf.pp1.ast.FuncDesignator;
-import rs.ac.bg.etf.pp1.ast.Increase;
-import rs.ac.bg.etf.pp1.ast.JustCondition;
-import rs.ac.bg.etf.pp1.ast.MethodDecl;
-import rs.ac.bg.etf.pp1.ast.MethodDeclNoParms;
-import rs.ac.bg.etf.pp1.ast.MethodDeclWithParms;
-import rs.ac.bg.etf.pp1.ast.MethodTypeName;
-import rs.ac.bg.etf.pp1.ast.NegTerms;
-import rs.ac.bg.etf.pp1.ast.NewFactor;
-import rs.ac.bg.etf.pp1.ast.NewFactorArray;
-import rs.ac.bg.etf.pp1.ast.NonVoidMethod;
-import rs.ac.bg.etf.pp1.ast.NotEqual;
-import rs.ac.bg.etf.pp1.ast.NumConstDecl;
-import rs.ac.bg.etf.pp1.ast.NumFactor;
-import rs.ac.bg.etf.pp1.ast.OneCondFact;
-import rs.ac.bg.etf.pp1.ast.OneCondTerm;
-import rs.ac.bg.etf.pp1.ast.OneExpr;
-import rs.ac.bg.etf.pp1.ast.OneFactor;
-import rs.ac.bg.etf.pp1.ast.OneTerm;
-import rs.ac.bg.etf.pp1.ast.PrintConstStmt;
-import rs.ac.bg.etf.pp1.ast.PrintStmt;
-import rs.ac.bg.etf.pp1.ast.ProgName;
-import rs.ac.bg.etf.pp1.ast.Program;
-import rs.ac.bg.etf.pp1.ast.ReadStmt;
-import rs.ac.bg.etf.pp1.ast.ReturnStmt;
-import rs.ac.bg.etf.pp1.ast.ReturnVoid;
-import rs.ac.bg.etf.pp1.ast.Statement;
-import rs.ac.bg.etf.pp1.ast.SyntaxNode;
-import rs.ac.bg.etf.pp1.ast.TermList;
-import rs.ac.bg.etf.pp1.ast.Type;
-import rs.ac.bg.etf.pp1.ast.VarDecl;
-import rs.ac.bg.etf.pp1.ast.VarDeclaration;
-import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
-import rs.ac.bg.etf.pp1.ast.VoidMethod;
+import rs.ac.bg.etf.pp1.ast.*;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
 import rs.etf.pp1.symboltable.concepts.Struct;
 
 public class SemanticAnalyzer extends VisitorAdaptor {
-	Obj currentMethod = null;
-	boolean returnFound = false;
 	boolean mainFound = false;
 	boolean errorDetected = false;
+	boolean doWhile = false;
+	boolean switchCase = false;
+	
 	int nVars;
 	int paramCnt = 0;
 
-	Obj debug = null;
+	Obj currentMethod = null;
 
 	List<Obj> objDeclList = new LinkedList<>();
 	Stack<List<Struct>> typeListStack = new Stack<List<Struct>>();
-	List<Struct> typeList = new LinkedList<>();
 
 	Logger log = Logger.getLogger(getClass());
 
@@ -323,15 +262,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	private void handleMethodEnd(MethodDecl methodDecl) {
-		if (!returnFound && currentMethod.getType() != Table.noType)
-			report_error(methodDecl.getLine(), ": Funkcija " + currentMethod.getName()
-					+ " nema return iskaz!");
-
 		currentMethod.setLevel(paramCnt);
 		Table.chainLocalSymbols(currentMethod);
 		Table.closeScope();
 
-		returnFound = false;
 		paramCnt = 0;
 		currentMethod = null;
 	}
@@ -456,10 +390,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				index++;
 			}
 		}
-//		typeList.clear();
 	}
 	
-	// PossibleActPars ::= (WithoutActPars) LPAREN RPAREN
 
 	// ActPars ::= (ActParsList) ActPars COMMA Expr
 	public void visit(ActParsList pars) {
@@ -487,7 +419,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	// Statement ::= (ReturnVoid) RETURN SEMI
 	public void visit(ReturnVoid stmt) {
-		returnFound = true;
 		if (currentMethod == null)
 			report_error(stmt.getLine(), "Return iskaz ne sme postojati van globalnih funkcija!");
 		else if (currentMethod.getType() != Table.noType) 
@@ -496,7 +427,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	// Statement ::= (ReturnStmt) RETURN Expr SEMI
 	public void visit(ReturnStmt stmt) {
-		returnFound = true;
 		if (currentMethod == null)
 			report_error(stmt.getLine(), "Return iskaz ne sme postojati van globalnih funkcija!");
 		else if (!currentMethod.getType().compatibleWith(stmt.getExpr().struct))
@@ -513,6 +443,25 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (d.getType() != Table.intType && d.getType() != Table.charType && d.getType() != Table.boolType)
 			report_error(stmt.getLine(), "Promenljiva mora biti tipa int, char ili bool");
 	}
+	
+	// Statement ::= (YieldStmt) YIELD Expr SEMI
+	public void visit(YieldStmt stmt) {
+		stmt.struct = stmt.getExpr().struct;
+	}
+	
+	// InitDoWhile
+	public void visit(InitDoWhile i) {
+		doWhile = true;
+	}
+	
+	// StatementList ::= (StmtList) StatementList Statement
+	public void visit(StmtList stmtList) {
+		Struct stmtListType = stmtList.getStatementList().struct;
+		Struct stmtType = stmtList.getStatement().struct;
+		
+		stmtList.struct = stmtListType != null ? stmtListType : stmtType;
+	}
+	
 	
 	/* --- CONDITION --- */
 	//	IfCondition ::= (JustCondition) Condition
@@ -567,6 +516,45 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		expr.struct = expr.getTerms().struct;
 	}
 
+	// Expr ::= (SwitchExpr) InitSwitch SWITCH LPAREN Expr RPAREN LBRACE CaseList DefaultCase RBRACE
+	public void visit(SwitchExpr expr) {
+		Struct caseListType = expr.getCaseList().struct;
+		Struct defaultCaseType = expr.getDefaultCase().struct;
+		
+		if (caseListType != null && !caseListType.equals(defaultCaseType))
+			report_error(expr.getLine(), "Sve YIELD naredbe moraju vracati isti tip!");
+		
+		expr.struct = defaultCaseType;
+	}
+	
+	/* ---- CASE ---- */
+	// InitSwitch
+	public void visit(InitSwitch i) {
+		switchCase = true;
+	}
+	
+	// CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
+	public void visit(Cases caseList) {
+		Struct caseListType = caseList.getCaseList().struct;
+		Struct stmtListType = caseList.getStatementList().struct;
+		
+		if (caseListType != null && stmtListType != null && !caseListType.equals(stmtListType))
+			report_error(caseList.getLine(), "Sve YIELD naredbe moraju vracati isti tip!");
+			
+		if (caseListType != null)
+			caseList.struct = caseListType;
+		else if (stmtListType != null) 
+			caseList.struct = stmtListType;
+	}
+	
+	// DefaultCase ::= (DefaultCase) DEFAULT COLON StatementList
+	public void visit(DefaultCase defaultCase) {
+		defaultCase.struct = defaultCase.getStatementList().struct;
+		if (defaultCase.struct == null) 
+			report_error(defaultCase.getLine(), "Podrazumevana grana unutar switch-a mora imati yield naredbu!");
+	}
+	
+
 	/* --- TERM --- */
 	// Terms ::= (TermList) Terms Addop Term
 	public void visit(TermList terms) {
@@ -588,7 +576,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		term.struct = term.getFactor().struct;
 	}
 
-	// Term ::= (OneFacotr) Factor
+	// Term ::= (OneFactor) Factor
 	public void visit(OneFactor term) {
 		term.struct = term.getFactor().struct;
 	}

@@ -1,0 +1,14 @@
+program errorLine4
+int i, j;
+{
+	void main()
+	{
+		j =	switch(i){
+				case 1:
+					i = i + 3;
+					yield true;
+				default:
+					yield 10;
+		};
+	}
+}

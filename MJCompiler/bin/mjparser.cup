@@ -67,13 +67,14 @@ nonterminal VarDecl, VarList, VarDeclList;
 nonterminal ClassDecl, ClassMethods, Extends;
 nonterminal MethodDecls;
 nonterminal FormPars, ActPars, PossibleActPars;
-nonterminal StatementList, Statement, CaseList, DefaultCase;
 nonterminal RepeatedDesignator, DesignatorStatement, DesignatorOptions;
 nonterminal Assignop, Addop, Mulop;
 nonterminal IfCondition;
+nonterminal InitDoWhile, InitSwitch;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, FuncDesignator, Designator, Var, Relop;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Expr, Terms, Term, Factor, Condition, CondTerm, CondFact;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct StatementList, Statement, CaseList, DefaultCase;
 
 precedence left ELSE;
 
@@ -185,7 +186,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorSt
 			|
 			(IfElseStmt) IF LPAREN IfCondition RPAREN Statement ELSE Statement
 			|
-			(DoWhileStmt) DO Statement WHILE LPAREN Condition RPAREN SEMI
+			(DoWhileStmt) InitDoWhile DO Statement WHILE LPAREN Condition RPAREN SEMI
 			|
 			(YieldStmt) YIELD Expr SEMI
 			|
@@ -206,13 +207,17 @@ Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorSt
 			(MoreStmts) LBRACE StatementList RBRACE
 			;
 			
+InitDoWhile ::= (InitDoWhile) ;
+			
 /* EXPR */
 Expr ::= (BasicTerms) Terms
 		|
 		(NegTerms) MINUS Terms
 		|
-		(SwitchExpr) SWITCH LPAREN Expr RPAREN LBRACE CaseList DefaultCase RBRACE
+		(SwitchExpr) InitSwitch SWITCH LPAREN Expr RPAREN LBRACE CaseList DefaultCase RBRACE
 		;
+		
+InitSwitch ::= (InitSwitch) ;
 					
 CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
 			|

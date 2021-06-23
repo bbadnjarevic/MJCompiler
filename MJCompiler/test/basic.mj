@@ -32,8 +32,9 @@ int niz[];
 		i = 1;
 	}
 	
-	void main(int aisd)
+	void main()
 	{
+		i = i + 3;
 		sum(jedan, inkrement(jedan, i, j));
 		method();
 		if (i > jedan)
