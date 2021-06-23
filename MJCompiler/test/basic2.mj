@@ -1,10 +1,15 @@
 program errorLine4
 
 const int jedan = 253;
-
+const bool b = false;
 {
+	int sum(int a, int b) 
+	bool i, j;
+	{
+		return sum(1, 2);
+	}
 	void main()
 	{
-		print(-1);
+		sum(jedan, 12);
 	}
 }

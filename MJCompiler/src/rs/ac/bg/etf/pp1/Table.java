@@ -17,4 +17,14 @@ public class Table extends Tab {
 		objNode.setAdr(adr);
 		return objNode;
 	}
+	
+	public static Obj findInCurrentScope(String name) {
+		Obj resultObj = null;
+		if (Tab.currentScope != null) {
+			if (Tab.currentScope.getLocals() != null) {
+				resultObj = Tab.currentScope.getLocals().searchKey(name);
+			}
+		}
+		return (resultObj != null) ? resultObj : noObj;
+	}
 }

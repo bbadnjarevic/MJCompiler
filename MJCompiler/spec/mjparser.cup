@@ -56,10 +56,10 @@ terminal Integer NUM_CONST;
 terminal String CHAR_CONST;
 terminal String BOOL_CONST;
 terminal String IDENT;
-terminal String RETURN;
+terminal String RETURN, BREAK, CONTINUE;
 terminal IF, ELSE;
-terminal CONTINUE, WHILE, READ, NEW, ENUM, SWITCH, BREAK, EXTENDS, CASE, YIELD, DEFAULT, DO;
-terminal COLON, GTE, LT, DOT, LTE, DIV, MINUS, MOD, MUL, GT, QUESTION, INC, NEQ, AND, EQ, OR, DEC;
+terminal WHILE, READ, NEW, ENUM, SWITCH, EXTENDS, CASE, YIELD, DEFAULT, DO;
+terminal String COLON, GTE, LT, DOT, LTE, DIV, MINUS, MOD, MUL, GT, QUESTION, INC, NEQ, AND, EQ, OR, DEC;
 
 nonterminal DeclarationsList;
 nonterminal ConstDecl, ConstDeclList, ConstDeclElem;
@@ -193,9 +193,9 @@ Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorSt
 			|
 			(YieldStmt) YIELD Expr SEMI
 			|
-			(BreakStmt) BREAK SEMI
+			(BreakStmt) BREAK:b SEMI
 			|
-			(ContinueStmt) CONTINUE SEMI
+			(ContinueStmt) CONTINUE:c SEMI
 			|
 			(ReturnVoid) RETURN:ret SEMI
 			|
@@ -246,11 +246,11 @@ Factor ::= (DesignatorFactor) Designator
 		|
 		(DesignatorFactorActPars) FuncDesignator PossibleActPars
 		|
-		(NumFactor) NUM_CONST
+		(NumFactor) NUM_CONST:num
 		|
-		(CharFactor) CHAR_CONST
+		(CharFactor) CHAR_CONST:ch
 		|
-		(BoolFactor) BOOL_CONST
+		(BoolFactor) BOOL_CONST:bool
 		|
 		(NewFactor) NEW Type
 		|
@@ -316,32 +316,32 @@ CondFact ::= (CondFact1Expr) Expr
 			;
 			
 /* OPERATIONS */
-Assignop ::= (Assignop) EQUAL
+Assignop ::= (Assignop) EQUAL:eq
 ;
 
-Relop ::= (Equal) EQ 
+Relop ::= (Equal) EQ:eq 
 		|
 		(NotEqual) NEQ 
 		| 
-		(GreaterThen) GT 
+		(GreaterThen) GT:gt
 		|
-		(GreaterThenEqual) GTE 
+		(GreaterThenEqual) GTE:gte
 		|
-		(LessThen) LT 
+		(LessThen) LT:lt
 		|
-		(LessThenEqual) LTE
+		(LessThenEqual) LTE:lte
 ;
 
-Addop ::= (Plus) PLUS 
+Addop ::= (Plus) PLUS:plus
 		|
-		(Minus) MINUS
+		(Minus) MINUS:minus
 ;
 
-Mulop ::= (Mul) MUL 
+Mulop ::= (Mul) MUL:mul
 		|
-		(Div) DIV 
+		(Div) DIV:div
 		|
-		(Mod) MOD
+		(Mod) MOD:mod
 ;
 
 			

@@ -171,7 +171,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	// Helpers
 	private void addObjDeclList(Struct type) {
 		for (Obj obj : objDeclList) {
-			Obj foundObj = Table.find(obj.getName());
+			Obj foundObj = Table.findInCurrentScope(obj.getName());
 			if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 				// Var/Const already decalred!
 				report_error("Greska na liniji " + obj.getLevel() + ": '" + obj.getName() + "' vec deklarisano!", null);
@@ -292,7 +292,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		objDeclList.clear();
 		Obj obj = new Obj(Obj.Var, parsList.getVar().obj.getName(), parsList.getType().struct);
 
-		Obj foundObj = Table.find(obj.getName());
+		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 			// Var/Const already decalred!
 			report_error("Greska na liniji " + parsList.getLine() + ": '" + obj.getName() + "' vec deklarisano!", null);
@@ -307,7 +307,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(FormParsElem parsElem) {
 		Obj obj = new Obj(Obj.Var, parsElem.getVar().obj.getName(), parsElem.getType().struct);
 
-		Obj foundObj = Table.find(obj.getName());
+		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 			// Var/Const already decalred!
 			report_error("Greska na liniji " + parsElem.getLine() + ": '" + obj.getName() + "' vec deklarisano!", null);
@@ -337,7 +337,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	private void handleDesignator(Designator designator, String name) {
 		String msg = "Pretraga na liniji " + designator.getLine() + "(";
-		Obj obj = Tab.find(name);
+		Obj obj = Table.find(name);
 		if (obj == Tab.noObj)
 			report_error(msg + name + "), nije nadjeno! ", null);
 		else
@@ -463,6 +463,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	// Statement ::= (YieldStmt) YIELD Expr SEMI
 	public void visit(YieldStmt stmt) {
+		if (switchCnt == 0)
+			report_error(stmt.getLine(), "Yield se mora nalaziti unutar case grane!");
 		stmt.struct = stmt.getExpr().struct;
 	}
 	
@@ -488,7 +490,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	// Statement ::= (ContinueStmt) CONTINUE SEMI
 	public void visit(ContinueStmt stmt) {
 		if (doWhileCnt == 0)
-			report_error(stmt.getLine(), "Break naredba se moze koristiti samo unutar do-while petlje!");
+			report_error(stmt.getLine(), "Continue naredba se moze koristiti samo unutar do-while petlje!");
 	}
 	
 	// StatementList ::= (StmtList) StatementList Statement
