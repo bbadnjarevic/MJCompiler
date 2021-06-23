@@ -1,8 +1,10 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
@@ -15,8 +17,8 @@ import rs.etf.pp1.symboltable.concepts.Struct;
 public class SemanticAnalyzer extends VisitorAdaptor {
 	boolean mainFound = false;
 	boolean errorDetected = false;
-	boolean doWhile = false;
-	boolean switchCase = false;
+	int switchCnt = 0;
+	int doWhileCnt = 0;
 	
 	int nVars;
 	int paramCnt = 0;
@@ -25,7 +27,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	List<Obj> objDeclList = new LinkedList<>();
 	Stack<List<Struct>> typeListStack = new Stack<List<Struct>>();
-
+	Stack<Set<Integer>> caseStack = new Stack<Set<Integer>>();
+	
 	Logger log = Logger.getLogger(getClass());
 
 	public boolean passed() {
@@ -233,27 +236,41 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	/* --- METHOD DECL --- */
 	// MethodDecl ::= (MethodDeclWithParms) MethodTypeName LPAREN FormPars RPAREN
 	// VarDeclList LBRACE StatementList RBRACE
-	public void visit(MethodDeclWithParms methodDecl) {
-		handleMethodEnd(methodDecl);
-	}
+//	public void visit(MethodDeclWithParms methodDecl) {
+//		handleMethodEnd(methodDecl);
+//	}
 
 	// MethodDecl ::= (MethodDeclNoParms) MethodTypeName LPAREN RPAREN VarDeclList
 	// LBRACE StatementList RBRACE
-	public void visit(MethodDeclNoParms methodDecl) {
+	public void visit(MethodDecl methodDecl) {
 		handleMethodEnd(methodDecl);
 		Obj m = methodDecl.getMethodTypeName().obj;
-		if (m.getType() == Table.noType && m.getName().equals("main"))
+		if (m.getName().equals("main") && m.getLevel() == 0 && m.getType() == Table.noType)
 			mainFound = true;
 	}
 
+	// MethodTypeName ::= (NonVoidMethod) Type IDENT:name
 	public void visit(NonVoidMethod method) {
 		handleMethodStart(method, method.getName(), method.getType().struct);
 	}
 
+	// MethodTypeName ::= (VoidMethod) VOID IDENT:name
 	public void visit(VoidMethod method) {
 		handleMethodStart(method, method.getName(), Table.noType);
 	}
 
+	// MethodParams ::= (MethParams) LPAREN FormPars RPAREN
+	public void visit(MethParams methdParams) {
+		currentMethod.setLevel(paramCnt);
+		Table.chainLocalSymbols(currentMethod);
+	}
+	
+	// MethodParams ::= (NoParams) LPAREN RPAREN
+	public void visit(NoParams methParams) {
+		currentMethod.setLevel(paramCnt);
+		Table.chainLocalSymbols(currentMethod);
+	}
+	
 	private void handleMethodStart(MethodTypeName method, String name, Struct type) {
 		currentMethod = Table.insert(Obj.Meth, name, type);
 		method.obj = currentMethod;
@@ -449,9 +466,29 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		stmt.struct = stmt.getExpr().struct;
 	}
 	
+	// Statement ::= (DoWhileStmt) InitDoWhile DO Statement WHILE LPAREN Condition RPAREN SEMI
+	public void visit(DoWhileStmt stmt) {
+		if (stmt.getCondition().struct != Table.boolType)
+			report_error(stmt.getLine(), "Uslovni izraz unutar do-while petlje mora biti tipa bool!");
+		
+		doWhileCnt--;
+	}
+	
 	// InitDoWhile
 	public void visit(InitDoWhile i) {
-		doWhile = true;
+		doWhileCnt++;
+	}
+	
+	// Statement ::= (BreakStmt) BREAK SEMI
+	public void visit(BreakStmt stmt) {
+		if (doWhileCnt == 0)
+			report_error(stmt.getLine(), "Break naredba se moze koristiti samo unutar do-while petlje!");
+	}
+	
+	// Statement ::= (ContinueStmt) CONTINUE SEMI
+	public void visit(ContinueStmt stmt) {
+		if (doWhileCnt == 0)
+			report_error(stmt.getLine(), "Break naredba se moze koristiti samo unutar do-while petlje!");
 	}
 	
 	// StatementList ::= (StmtList) StatementList Statement
@@ -464,8 +501,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	
 	/* --- CONDITION --- */
-	//	IfCondition ::= (JustCondition) Condition
-	public void visit(JustCondition ifCondition) {
+	//	IfCondition ::= (IfCond) Condition
+	public void visit(IfCond ifCondition) {
 		if (ifCondition.getCondition().struct != Table.boolType)
 			report_error(ifCondition.getLine(), "Uslovni izraz unutar if naredbe mora biti tipa bool");
 	}
@@ -510,7 +547,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	// Expr ::= (NegTerms) MINUS Terms
 	public void visit(NegTerms expr) {
-		if (expr.struct != Table.intType) {
+		if (expr.getTerms().struct != Table.intType) {
 			report_error(expr.getLine(), "Operand mora biti tipa int");
 		}
 		expr.struct = expr.getTerms().struct;
@@ -524,13 +561,19 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (caseListType != null && !caseListType.equals(defaultCaseType))
 			report_error(expr.getLine(), "Sve YIELD naredbe moraju vracati isti tip!");
 		
+		if (expr.getExpr().struct != Table.intType)
+			report_error(expr.getLine(), "Izraz unutar switch naredbe mora biti celobrojnog tipa!");
+		
 		expr.struct = defaultCaseType;
+		switchCnt--;
+		caseStack.pop();
 	}
 	
 	/* ---- CASE ---- */
 	// InitSwitch
 	public void visit(InitSwitch i) {
-		switchCase = true;
+		switchCnt++;
+		caseStack.push(new HashSet<Integer>());
 	}
 	
 	// CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
@@ -545,6 +588,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			caseList.struct = caseListType;
 		else if (stmtListType != null) 
 			caseList.struct = stmtListType;
+		
+		Integer num = caseList.getNum();
+		if (caseStack.lastElement().contains(num))
+			report_error(caseList.getLine(), "Ne sme postojati vise case grana sa istom celobrojnom konstantom!");
+		caseStack.lastElement().add(num);
 	}
 	
 	// DefaultCase ::= (DefaultCase) DEFAULT COLON StatementList

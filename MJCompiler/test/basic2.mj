@@ -1,14 +1,10 @@
 program errorLine4
-int i, j;
+
+const int jedan = 253;
+
 {
 	void main()
 	{
-		j =	switch(i){
-				case 1:
-					i = i + 3;
-					yield true;
-				default:
-					yield 10;
-		};
+		print(-1);
 	}
 }

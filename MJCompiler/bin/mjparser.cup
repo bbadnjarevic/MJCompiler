@@ -65,7 +65,7 @@ nonterminal DeclarationsList;
 nonterminal ConstDecl, ConstDeclList, ConstDeclElem;
 nonterminal VarDecl, VarList, VarDeclList;
 nonterminal ClassDecl, ClassMethods, Extends;
-nonterminal MethodDecls;
+nonterminal MethodDecls, MethodParams;
 nonterminal FormPars, ActPars, PossibleActPars;
 nonterminal RepeatedDesignator, DesignatorStatement, DesignatorOptions;
 nonterminal Assignop, Addop, Mulop;
@@ -157,15 +157,18 @@ MethodDecls ::= (MethodDeclList) MethodDecls MethodDecl
 			(NoMethodDecls)
 			;
 			
-MethodDecl ::= (MethodDeclWithParms) MethodTypeName LPAREN FormPars RPAREN VarDeclList LBRACE StatementList RBRACE
-			|
-			(MethodDeclNoParms) MethodTypeName LPAREN RPAREN VarDeclList LBRACE StatementList RBRACE
+MethodDecl ::= (MethodDecl) MethodTypeName MethodParams VarDeclList LBRACE StatementList RBRACE
 			;
 			
 MethodTypeName ::= (NonVoidMethod) Type IDENT:name
 				|
 				(VoidMethod) VOID IDENT:name
 ;
+
+MethodParams ::= (MethParams) LPAREN FormPars RPAREN
+				|
+				(NoParams) LPAREN RPAREN
+				;
 
 FormPars ::= (FormParsList) FormPars COMMA Type Var
 			|
@@ -219,7 +222,7 @@ Expr ::= (BasicTerms) Terms
 		
 InitSwitch ::= (InitSwitch) ;
 					
-CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
+CaseList ::= (Cases) CaseList CASE NUM_CONST:num COLON StatementList
 			|
 			(NoCase) /* epsilon */
 			;
@@ -292,7 +295,7 @@ PossibleActPars ::= (WithActPars) LPAREN ActPars RPAREN
 		
 
 /* CONDITION */
-IfCondition ::= (JustCondition) Condition
+IfCondition ::= (IfCond) Condition
 			|
 			(IfError) error:e {:  parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod logickog izraza unutar if konstrukcije", null); :}
 			;
