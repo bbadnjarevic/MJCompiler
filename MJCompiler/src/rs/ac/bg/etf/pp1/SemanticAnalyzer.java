@@ -329,14 +329,28 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	// Designator ::= (DesignatorWithExpr) IDENT LSQUARE Expr RSQUARE
 	public void visit(DesignatorWithExpr designator) {
-		handleDesignator(designator, designator.getName());
-		if (designator.obj.getType().getKind() != Struct.Array) {
-			report_error(designator.getLine(), designator.getName() + " nije moguce indeksirati!");
-		}
+		designator.obj = designator.getElemAccess().obj;
 		if (designator.getExpr().struct != Table.intType)
 			report_error(designator.getLine(),
-					"Izraz za indeksiranje niza " + designator.getName() + " mora biti tipa int!");
+					"Izraz za indeksiranje niza " + designator.obj.getName() + " mora biti tipa int!");
 		designator.obj = new Obj(Obj.Elem, designator.obj.getName(), designator.obj.getType().getElemType());
+		
+	}
+	public void visit(ElemAccess designator) {
+		String name = designator.getName();
+
+		String msg = "Pretraga na liniji " + designator.getLine() + "(";
+		Obj obj = Table.find(name);
+		if (obj == Tab.noObj)
+			report_error(msg + name + "), nije nadjeno! ", null);
+		else
+			report_info(msg + name + "), nadjeno " + getObjString(obj), null);
+
+		designator.obj = obj;
+		
+		if (designator.obj.getType().getKind() != Struct.Array) {
+			report_error(designator.getLine(), name + " nije moguce indeksirati!");
+		}
 	}
 
 	private void handleDesignator(Designator designator, String name) {
@@ -381,7 +395,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	private void handleIncDec(DesignatorStatement stmt, Obj designator) {
-		if (designator.getKind() != Obj.Var)
+		if (designator.getKind() != Obj.Var && designator.getKind() != Obj.Elem)
 			report_error(stmt.getLine(), designator.getName() + " nije promenljiva ili element niz!");
 
 		if (designator.getType() != Table.intType) {
@@ -656,6 +670,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(DesignatorFactorActPars factor) {
 		handleFuncCall(factor.getFuncDesignator().obj, factor.getLine());
 		factor.struct = factor.getFuncDesignator().obj.getType();
+	}
+	
+	// Factor ::= NEW Type
+	public void visit(NewFactor factor) {
+		Struct s = factor.getType().struct;
+		if (s == Table.intType || s == Table.boolType || s == Table.charType || s == Table.noType)
+			report_error(factor.getLine(), "Operator NEW se moze koristiti samo sa korisnicki definisanim tipovima!");
 	}
 
 	// Factor ::= NEW Type LSQUARE Expr RSQUARE

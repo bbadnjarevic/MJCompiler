@@ -70,9 +70,11 @@ nonterminal FormPars, ActPars, PossibleActPars;
 nonterminal RepeatedDesignator, DesignatorStatement, DesignatorOptions;
 nonterminal Assignop, Addop, Mulop;
 nonterminal IfCondition;
-nonterminal InitDoWhile, InitSwitch;
+nonterminal InitDoWhile, InitSwitch, InitOR, InitAND, NextOR, NextAND;
+nonterminal InitThen, InitElse, AfterIf, SkipElse;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, FuncDesignator, Designator, Var, Relop;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj ElemAccess;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Expr, Terms, Term, Factor, Condition, CondTerm, CondFact;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct StatementList, Statement, CaseList, DefaultCase;
 
@@ -185,9 +187,9 @@ StatementList ::= (StmtList) StatementList Statement
 			 	
 Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorStmt */
 			|
-			(IfStmt) IF LPAREN IfCondition RPAREN Statement
+			(IfStmt) IF LPAREN IfCondition RPAREN InitThen Statement AfterIf
 			|
-			(IfElseStmt) IF LPAREN IfCondition RPAREN Statement ELSE Statement
+			(IfElseStmt) IF LPAREN IfCondition RPAREN InitThen Statement SkipElse InitElse Statement AfterIf
 			|
 			(DoWhileStmt) InitDoWhile DO Statement WHILE LPAREN Condition RPAREN SEMI
 			|
@@ -211,6 +213,10 @@ Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorSt
 			;
 			
 InitDoWhile ::= (InitDoWhile) ;
+InitThen ::= (InitThen) ;
+InitElse ::= (InitElse) ;
+AfterIf ::= (AfterIf) ;
+SkipElse ::= (SkipElse) ELSE;
 			
 /* EXPR */
 Expr ::= (BasicTerms) Terms
@@ -277,9 +283,10 @@ FuncDesignator ::= (FuncDesignator) Designator;
 		
 Designator ::= (DesignatorJustIdent) IDENT:name
 				|
-				(DesignatorWithExpr) IDENT:name LSQUARE Expr RSQUARE
+				(DesignatorWithExpr) ElemAccess LSQUARE Expr RSQUARE
 ;
 
+ElemAccess ::= (ElemAccess) IDENT:name;
 					
 /* ACT PARS */
 ActPars ::= (ActParsList) ActPars COMMA Expr
@@ -300,15 +307,21 @@ IfCondition ::= (IfCond) Condition
 			(IfError) error:e {:  parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod logickog izraza unutar if konstrukcije", null); :}
 			;
 
-Condition ::= (CondTerms) Condition OR CondTerm
+Condition ::= (CondTerms) InitOR OR NextOR
 			|
 			(OneCondTerm) CondTerm
 			;
 			
-CondTerm ::= (CondFacts) CondTerm AND CondFact
+InitOR ::= (InitOR) Condition;
+NextOR ::= (NextOR) CondTerm ;
+			
+CondTerm ::= (CondFacts) InitAND AND NextAND
 			|
 			(OneCondFact) CondFact
 			;
+			
+InitAND ::= (InitAND) CondTerm;
+NextAND ::= (NextAND) CondFact;
 			
 CondFact ::= (CondFact1Expr) Expr
 			|

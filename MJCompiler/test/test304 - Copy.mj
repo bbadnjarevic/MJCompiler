@@ -1,0 +1,191 @@
+//Class/Array manipulation tests
+
+program correctSyntax
+
+const bool trueConst = true;
+const bool falseConst = false;
+const int zeroConst = 0;
+const int oneConst = 1;
+
+int negOneVar;
+int twoVar;
+
+const char aCharConst = 'A';
+char bCharGlobalVar;
+
+{
+    void setbGlobalChar() {
+        bCharGlobalVar = 'B';
+    }
+
+    char dCharMethodResult() {
+        return 'D';
+    }
+
+    void main()
+        char cCharLocalVar;
+        char charArray[];
+        int loopOne, loopTwo, loopThree;
+    {
+        cCharLocalVar = 'C';
+        setbGlobalChar();
+
+        negOneVar = -oneConst;
+        twoVar = 2;
+
+        charArray = new char[-negOneVar + twoVar * oneConst + oneConst];
+
+        charArray[0] = aCharConst;
+        charArray[1] = bCharGlobalVar;
+        charArray[2] = cCharLocalVar;
+        charArray[3] = dCharMethodResult();
+
+        // expected output abcd
+        print(charArray[0]);
+        print(charArray[1]);
+        print(charArray[2]);
+        print(charArray[3]);
+        print(eol);
+
+        // nesting loads of ifs
+        // expected output abcd
+        if (charArray[0] == charArray[0] &&  charArray[1] == charArray[1] && charArray[2] == charArray[2] && charArray[3] == 'A') {
+            // doesn't go here
+            print(charArray[1]);
+        }
+        else {
+            // goes here
+            print(charArray[0]);
+            if (charArray[1] > charArray[0]) {
+                // goes here
+                print(charArray[1]);
+
+                if (2 < 1 || true == true && 5 >= 7) {
+                } else if (true == true && 2 >= 1 && 2 >= twoVar && twoVar >= 5 || 1 == 2 || charArray[1] == charArray[2]) {
+                    // doesn't go here
+                    print(charArray[1]);
+                } else if (charArray[2] != charArray[0] && charArray[3] <= charArray[0] || true == false || true == true && 2 == 5 || charArray[2] >= charArray[2] && charArray[3] > charArray[2]){
+                    // goes here
+                    print(charArray[2]);
+                } else {
+                    // doesn't go here
+                    print(charArray[1]);
+                }
+                // goes here
+                print(charArray[3]);
+            } else if (charArray[2] < charArray[1]) {
+                // doesn't go here
+                print(charArray[0]);
+            }
+        }
+        print(eol);
+
+        // Expected output [A{B()D()}C{B(AB)D(AB)}D{A(ABC)C(ABC)}]
+        loopOne = 0;
+        print('[');
+        do {
+            if (loopOne == 1) {
+                loopOne++;
+                continue;
+            }
+
+            if (loopOne >= 4) {
+                break;
+            }
+
+            print(charArray[loopOne]);
+
+            print('{');
+            loopTwo = 0;
+            do {
+                // when loopOne is odd skips odd loopTwo elems
+                // otherwise skips even loopTwo elems
+                if ((loopTwo + loopOne) % 2 == 0) {
+                    loopTwo++;
+                    continue;
+                }
+
+                print(charArray[loopTwo]);
+
+                print('(');
+                loopThree = 0;
+                do {
+                    // breaks once loopOne is reached
+                    if (loopThree >= loopOne) break;
+
+                    print(charArray[loopThree]);
+
+                    loopThree++;
+                } while (loopThree < 4);
+                print(')');
+
+                loopTwo++;
+            } while (loopTwo < 4);
+            print('}');
+
+            loopOne++;
+        } while (loopOne < 5);
+        print(']');
+        print(eol);
+
+
+        // Expected output ABC
+        loopOne = 4;
+        loopTwo = 70;
+        loopThree = 200;
+
+        loopOne = switch(loopOne) {
+            case 0:
+            case 1:
+            case 2:
+                yield 1;
+            case 3:
+            case 4:
+            case 5:
+                // let's go to default here
+                loopTwo = switch(loopTwo) {
+                    case 0:
+                        yield 0;
+                    case 1:
+                        yield 0;
+                    case 2:
+                        yield 0;
+                    default:
+                        loopThree = switch(loopThree) {
+                            case 200:
+                                yield 2;
+                            case 6:
+                            case 3:
+                                yield 0;
+                            case 1:
+                            case 0:
+                                yield 0;
+                            case 11:
+                            case 22:
+                                yield 0;
+                            default:
+                                if (true) {
+                                    yield 0;
+                                }
+                                else {
+                                    yield 1;
+                                }
+                        };
+                        yield 1;
+                };
+                yield 0;
+            case 6:
+            case 7:
+            case 8:
+            default:
+                yield 1;
+        };
+
+        print(charArray[loopOne]);
+        print(charArray[loopTwo]);
+        print(charArray[loopThree]);
+        print(eol);
+
+    }
+}
+

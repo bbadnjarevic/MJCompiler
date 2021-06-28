@@ -1,0 +1,86 @@
+//Class/Array manipulation tests
+
+program correctSyntax
+
+const bool trueConst = true;
+const bool falseConst = false;
+const int zeroConst = 0;
+const int oneConst = 1;
+
+int negOneVar;
+int twoVar;
+
+const char aCharConst = 'A';
+char bCharGlobalVar;
+
+{
+    void setbGlobalChar() {
+        bCharGlobalVar = 'B';
+    }
+
+    char dCharMethodResult() {
+        return 'D';
+    }
+
+    void main()
+        char cCharLocalVar;
+        char charArray[];
+        int loopOne, loopTwo, loopThree;
+    {
+        cCharLocalVar = 'C';
+        setbGlobalChar();
+
+        negOneVar = -oneConst;
+        twoVar = 2;
+
+        charArray = new char[twoVar * oneConst + oneConst + oneConst];
+
+        charArray[0] = aCharConst;
+        charArray[1] = bCharGlobalVar;
+        charArray[2] = cCharLocalVar;
+        charArray[3] = dCharMethodResult();
+
+        // expected output abcd
+        print(charArray[0]);
+        print(charArray[1]);
+        print(charArray[2]);
+        print(charArray[3]);
+        print(eol);
+
+        // nesting loads of ifs
+        // expected output abcd
+        if (charArray[0] == charArray[0] &&  charArray[1] == charArray[1] && charArray[2] == charArray[2] && charArray[3] == 'A') {
+            // doesn't go here
+            print(charArray[1]);
+        }
+        else {
+            // goes here
+            print(charArray[0]);
+            if (charArray[1] > charArray[0]) {
+                // goes here
+                print(charArray[1]);
+
+                if (2 < 1 || true == true && 5 >= 7) {
+                } else if (true == true && 2 >= 1 && 2 >= twoVar && twoVar >= 5 || 1 == 2 || charArray[1] == charArray[2]) {
+                    // doesn't go here
+                    print(charArray[1]);
+                } else if (charArray[2] != charArray[0] && charArray[3] <= charArray[0] || true == false || true == true && 2 == 5 || charArray[2] >= charArray[2] && charArray[3] > charArray[2]){
+                    // goes here
+                    print(charArray[2]);
+                } else {
+                    // doesn't go here
+                    print(charArray[1]);
+                }
+                // goes here
+                print(charArray[3]);
+            } else if (charArray[2] < charArray[1]) {
+                // doesn't go here
+                print(charArray[0]);
+            }
+        }
+        print(eol);
+
+        
+    }
+}
+
