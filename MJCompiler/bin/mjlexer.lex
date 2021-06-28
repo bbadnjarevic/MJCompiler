@@ -75,8 +75,8 @@ import java_cup.runtime.Symbol;
 
 // Tokens
 ("true"|"false")				{ return new_symbol(sym.BOOL_CONST, yytext()); }
-[0-9]+  						{ return new_symbol(sym.NUM_CONST, Integer.parseInt(yytext())); }
-'.'								{ return new_symbol(sym.CHAR_CONST, yytext()); }
+[-]?[0-9]+						{ return new_symbol(sym.NUM_CONST, Integer.parseInt(yytext())); }
+'.{1,2}'								{ return new_symbol(sym.CHAR_CONST, yytext()); }
 ([a-z]|[A-Z])[a-zA-Z0-9_]* 		{ return new_symbol(sym.IDENT, yytext()); }
 
 

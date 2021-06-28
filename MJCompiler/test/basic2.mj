@@ -1,19 +1,20 @@
-program errorLine4
-
-const int jedan = 253;
-const bool b = false;
+program moiProgram
+int i;
+const int j = 15;
 {
-	int sum(int a, int b) 
-	bool i, j;
-	{
-		return sum(1, 2);
+	int sum(int a, int b) int z; int y; {
+		return a + b;
 	}
-	void main()
-	int array[];
-	{
-		sum(jedan, 12);
-		if (1 > 2) {
-			print(2);
-		}
+	void testFunc() {
+		print('F');
+	}
+	int test2() {
+		print('U');
+		return 1;
+	}
+	void main() {
+		test2();
+		i = 5;
+		print(sum(i, 10));
 	}
 }

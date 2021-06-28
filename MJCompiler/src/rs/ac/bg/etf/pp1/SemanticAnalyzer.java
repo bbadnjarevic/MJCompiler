@@ -1,5 +1,6 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -19,16 +20,17 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	boolean errorDetected = false;
 	int switchCnt = 0;
 	int doWhileCnt = 0;
-	
+
 	int nVars;
 	int paramCnt = 0;
 
 	Obj currentMethod = null;
+	Collection<Obj> currentMethodSymbols = null;
 
 	List<Obj> objDeclList = new LinkedList<>();
 	Stack<List<Struct>> typeListStack = new Stack<List<Struct>>();
 	Stack<Set<Integer>> caseStack = new Stack<Set<Integer>>();
-	
+
 	Logger log = Logger.getLogger(getClass());
 
 	public boolean passed() {
@@ -106,7 +108,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 		return output.toString();
 	}
-	
+
 	// Reporting
 	public void report_error(String message, SyntaxNode info) {
 		errorDetected = true;
@@ -122,7 +124,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		String message = "Greska na liniji %d: " + msg;
 		log.error(String.format(message, line));
 	}
-	
+
 	public void report_info(String message, SyntaxNode info) {
 		StringBuilder msg = new StringBuilder(message);
 		int line = (info == null) ? 0 : info.getLine();
@@ -131,7 +133,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		log.info(msg.toString());
 	}
 
-	
 	// Program ::= (Program) PROG ProgName DeclarationsList LBRACE MethodDecls
 	// RBRACE
 	public void visit(Program program) {
@@ -139,6 +140,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Table.chainLocalSymbols(program.getProgName().obj);
 		Table.closeScope();
 		
+		int i = 0;
+		for(Obj obj: program.getProgName().obj.getLocalSymbols())
+			if (obj.getKind() == Obj.Var)
+				obj.setAdr(i++);
+
 		if (!mainFound)
 			report_error("Mora postojati main metoda tipa void i bez argumenata!", null);
 	}
@@ -205,8 +211,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	// ConstDeclElem ::= (BoolConstDecl) IDENT:constName EQUAL BOOL_CONST:constVal
 	public void visit(BoolConstDecl constDecl) {
-		handleConst(constDecl.getConstName(), Table.boolType, constDecl.getConstVal().equals("true") ? 1 : 0,
-				constDecl.getLine());
+		handleConst(constDecl.getConstName(), Table.boolType, Boolean.parseBoolean(constDecl.getConstVal()) ? 1 : 0, constDecl.getLine());
 	}
 
 	private void handleConst(String name, Struct type, int value, int line) {
@@ -234,12 +239,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	/* --- METHOD DECL --- */
-	// MethodDecl ::= (MethodDeclWithParms) MethodTypeName LPAREN FormPars RPAREN
-	// VarDeclList LBRACE StatementList RBRACE
-//	public void visit(MethodDeclWithParms methodDecl) {
-//		handleMethodEnd(methodDecl);
-//	}
-
 	// MethodDecl ::= (MethodDeclNoParms) MethodTypeName LPAREN RPAREN VarDeclList
 	// LBRACE StatementList RBRACE
 	public void visit(MethodDecl methodDecl) {
@@ -262,15 +261,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	// MethodParams ::= (MethParams) LPAREN FormPars RPAREN
 	public void visit(MethParams methdParams) {
 		currentMethod.setLevel(paramCnt);
+//		currentMethodSymbols = Table.currentScope().getLocals().symbols();
 		Table.chainLocalSymbols(currentMethod);
 	}
-	
+
 	// MethodParams ::= (NoParams) LPAREN RPAREN
 	public void visit(NoParams methParams) {
 		currentMethod.setLevel(paramCnt);
-		Table.chainLocalSymbols(currentMethod);
+//		Table.chainLocalSymbols(currentMethod);
 	}
-	
+
 	private void handleMethodStart(MethodTypeName method, String name, Struct type) {
 		currentMethod = Table.insert(Obj.Meth, name, type);
 		method.obj = currentMethod;
@@ -282,6 +282,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		currentMethod.setLevel(paramCnt);
 		Table.chainLocalSymbols(currentMethod);
 		Table.closeScope();
+		
+		int i = 0;
+		for(Obj obj: currentMethod.getLocalSymbols())
+			obj.setAdr(i++);
 
 		paramCnt = 0;
 		currentMethod = null;
@@ -345,7 +349,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 		designator.obj = obj;
 	}
-	
+
 	// FuncDesignator ::= (FuncDesignator) Designator;
 	public void visit(FuncDesignator funcDesignator) {
 		typeListStack.push(new LinkedList<Struct>());
@@ -385,15 +389,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 	}
 
-	// DesignatorStatement ::= (DesignatorActPars) FuncDesignator PossibleActPars SEMI
+	// DesignatorStatement ::= (DesignatorActPars) FuncDesignator PossibleActPars
+	// SEMI
 	public void visit(DesignatorActPars stmt) {
 		handleFuncCall(stmt.getFuncDesignator().obj, stmt.getLine());
 	}
 
 	private void handleFuncCall(Obj designator, int line) {
 		if (designator.getKind() != Obj.Meth)
-			report_error(line, designator.getName() + " nije globalna funkcija!");
-		
+			report_error(line, "Nije pronadjena globalna funkcija sa datim nazivom!");
+
 		List<Struct> typeList = typeListStack.pop();
 		if (typeList.size() != designator.getLevel())
 			report_error(line, "Ocekivan broj parametara: " + designator.getLevel() + ". Dobijeno: " + typeList.size());
@@ -408,7 +413,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			}
 		}
 	}
-	
 
 	// ActPars ::= (ActParsList) ActPars COMMA Expr
 	public void visit(ActParsList pars) {
@@ -422,26 +426,29 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	/* --- STATEMENT --- */
 	// Statement ::= (PrintStmt) PRINT LPAREN Expr RPAREN SEMI
-	public void visit(PrintStmt stmt) { 
+	public void visit(PrintStmt stmt) {
 		handlePrintStmt(stmt.getExpr().struct, stmt.getLine());
 	}
+
 	// Statement ::= (PrintConstStmt) PRINT LPAREN Expr COMMA NUM_CONST RPAREN SEMI
 	public void visit(PrintConstStmt stmt) {
 		handlePrintStmt(stmt.getExpr().struct, stmt.getLine());
 	}
+
 	private void handlePrintStmt(Struct t, int line) {
 		if (t != Table.intType && t != Table.charType && t != Table.boolType)
 			report_error(line, "print funkcija prima parametre tipa: int, char ili bool");
 	}
-	
+
 	// Statement ::= (ReturnVoid) RETURN SEMI
 	public void visit(ReturnVoid stmt) {
 		if (currentMethod == null)
 			report_error(stmt.getLine(), "Return iskaz ne sme postojati van globalnih funkcija!");
-		else if (currentMethod.getType() != Table.noType) 
-			report_error(stmt.getLine(), "Funkcija " + currentMethod.getName() + " ocekuje povratnu vrednost razlicitu od void!");
+		else if (currentMethod.getType() != Table.noType)
+			report_error(stmt.getLine(),
+					"Funkcija " + currentMethod.getName() + " ocekuje povratnu vrednost razlicitu od void!");
 	}
-	
+
 	// Statement ::= (ReturnStmt) RETURN Expr SEMI
 	public void visit(ReturnStmt stmt) {
 		if (currentMethod == null)
@@ -451,7 +458,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 					"Tip izraza u return naredbi nije kompatibilan sa tipom povratne vrednosti funkcije "
 							+ currentMethod.getName());
 	}
-	
+
 	// Statement ::= (ReadStmt) READ LPAREN Designator RPAREN SEMI
 	public void visit(ReadStmt stmt) {
 		Obj d = stmt.getDesignator().obj;
@@ -460,72 +467,75 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (d.getType() != Table.intType && d.getType() != Table.charType && d.getType() != Table.boolType)
 			report_error(stmt.getLine(), "Promenljiva mora biti tipa int, char ili bool");
 	}
-	
+
 	// Statement ::= (YieldStmt) YIELD Expr SEMI
 	public void visit(YieldStmt stmt) {
 		if (switchCnt == 0)
 			report_error(stmt.getLine(), "Yield se mora nalaziti unutar case grane!");
 		stmt.struct = stmt.getExpr().struct;
 	}
-	
-	// Statement ::= (DoWhileStmt) InitDoWhile DO Statement WHILE LPAREN Condition RPAREN SEMI
+
+	// Statement ::= (DoWhileStmt) InitDoWhile DO Statement WHILE LPAREN Condition
+	// RPAREN SEMI
 	public void visit(DoWhileStmt stmt) {
 		if (stmt.getCondition().struct != Table.boolType)
 			report_error(stmt.getLine(), "Uslovni izraz unutar do-while petlje mora biti tipa bool!");
-		
+
 		doWhileCnt--;
 	}
-	
+
 	// InitDoWhile
 	public void visit(InitDoWhile i) {
 		doWhileCnt++;
 	}
-	
+
 	// Statement ::= (BreakStmt) BREAK SEMI
 	public void visit(BreakStmt stmt) {
 		if (doWhileCnt == 0)
 			report_error(stmt.getLine(), "Break naredba se moze koristiti samo unutar do-while petlje!");
 	}
-	
+
 	// Statement ::= (ContinueStmt) CONTINUE SEMI
 	public void visit(ContinueStmt stmt) {
 		if (doWhileCnt == 0)
 			report_error(stmt.getLine(), "Continue naredba se moze koristiti samo unutar do-while petlje!");
 	}
-	
+
 	// StatementList ::= (StmtList) StatementList Statement
 	public void visit(StmtList stmtList) {
 		Struct stmtListType = stmtList.getStatementList().struct;
 		Struct stmtType = stmtList.getStatement().struct;
-		
+
 		stmtList.struct = stmtListType != null ? stmtListType : stmtType;
 	}
-	
-	
+
 	/* --- CONDITION --- */
-	//	IfCondition ::= (IfCond) Condition
+	// IfCondition ::= (IfCond) Condition
 	public void visit(IfCond ifCondition) {
 		if (ifCondition.getCondition().struct != Table.boolType)
 			report_error(ifCondition.getLine(), "Uslovni izraz unutar if naredbe mora biti tipa bool");
 	}
+
 	// Condition ::= (CondTerms) Condition OR CondTerm
 	public void visit(CondTerms condition) {
 		condition.struct = Table.boolType;
 	}
+
 	// Condition ::= (OneCondTerm) CondTerm
 	public void visit(OneCondTerm condition) {
 		condition.struct = condition.getCondTerm().struct;
 	}
-	
+
 	// CondTerm ::= (CondFacts) CondTerm AND CondFact
 	public void visit(CondFacts condTerm) {
 		condTerm.struct = Table.boolType;
 	}
+
 	// CondTerm ::= (OneCondFact) CondFact
 	public void visit(OneCondFact condTerm) {
 		condTerm.struct = condTerm.getCondFact().struct;
 	}
-	
+
 	// CondFact ::= (CondFact1Expr) Expr
 	public void visit(CondFact1Expr condFact) {
 		condFact.struct = condFact.getExpr().struct;
@@ -533,13 +543,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error(condFact.getLine(), "Izraz mora biti tipa bool!");
 		}
 	}
+
 	// CondFact ::= (CondFact2Expr) Expr Relop Expr
 	public void visit(CondFact2Expr condFact) {
-		if (!condFact.getExpr().struct.compatibleWith(condFact.getExpr1().struct)) 
+		if (!condFact.getExpr().struct.compatibleWith(condFact.getExpr1().struct))
 			report_error(condFact.getLine(), "Izrazi nisu kompatibilni za relacionu operaciju");
-		if ((condFact.getExpr().struct.getKind() == Struct.Array || condFact.getExpr1().struct.getKind() == Struct.Array)
-				&& (condFact.getRelop().obj == null || 
-				(condFact.getRelop().obj.getName() != "!=" && condFact.getRelop().obj.getName() != "==")))
+		if ((condFact.getExpr().struct.getKind() == Struct.Array
+				|| condFact.getExpr1().struct.getKind() == Struct.Array)
+				&& (condFact.getRelop().obj == null
+						|| (condFact.getRelop().obj.getName() != "!=" && condFact.getRelop().obj.getName() != "==")))
 			report_error(condFact.getLine(), "Uz promenljive tipa niza se mogu koristiti samo != i ==");
 		condFact.struct = Table.boolType;
 	}
@@ -558,55 +570,55 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		expr.struct = expr.getTerms().struct;
 	}
 
-	// Expr ::= (SwitchExpr) InitSwitch SWITCH LPAREN Expr RPAREN LBRACE CaseList DefaultCase RBRACE
+	// Expr ::= (SwitchExpr) InitSwitch SWITCH LPAREN Expr RPAREN LBRACE CaseList
+	// DefaultCase RBRACE
 	public void visit(SwitchExpr expr) {
 		Struct caseListType = expr.getCaseList().struct;
 		Struct defaultCaseType = expr.getDefaultCase().struct;
-		
+
 		if (caseListType != null && !caseListType.equals(defaultCaseType))
 			report_error(expr.getLine(), "Sve YIELD naredbe moraju vracati isti tip!");
-		
+
 		if (expr.getExpr().struct != Table.intType)
 			report_error(expr.getLine(), "Izraz unutar switch naredbe mora biti celobrojnog tipa!");
-		
+
 		expr.struct = defaultCaseType;
 		switchCnt--;
 		caseStack.pop();
 	}
-	
+
 	/* ---- CASE ---- */
 	// InitSwitch
 	public void visit(InitSwitch i) {
 		switchCnt++;
 		caseStack.push(new HashSet<Integer>());
 	}
-	
+
 	// CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
 	public void visit(Cases caseList) {
 		Struct caseListType = caseList.getCaseList().struct;
 		Struct stmtListType = caseList.getStatementList().struct;
-		
+
 		if (caseListType != null && stmtListType != null && !caseListType.equals(stmtListType))
 			report_error(caseList.getLine(), "Sve YIELD naredbe moraju vracati isti tip!");
-			
+
 		if (caseListType != null)
 			caseList.struct = caseListType;
-		else if (stmtListType != null) 
+		else if (stmtListType != null)
 			caseList.struct = stmtListType;
-		
+
 		Integer num = caseList.getNum();
 		if (caseStack.lastElement().contains(num))
 			report_error(caseList.getLine(), "Ne sme postojati vise case grana sa istom celobrojnom konstantom!");
 		caseStack.lastElement().add(num);
 	}
-	
+
 	// DefaultCase ::= (DefaultCase) DEFAULT COLON StatementList
 	public void visit(DefaultCase defaultCase) {
 		defaultCase.struct = defaultCase.getStatementList().struct;
-		if (defaultCase.struct == null) 
+		if (defaultCase.struct == null)
 			report_error(defaultCase.getLine(), "Podrazumevana grana unutar switch-a mora imati yield naredbu!");
 	}
-	
 
 	/* --- TERM --- */
 	// Terms ::= (TermList) Terms Addop Term
@@ -658,20 +670,24 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		// TODO Not sure about this one
 		factor.struct = factor.getExpr().struct;
 	}
+
 	public void visit(NumFactor factor) {
 		factor.struct = Table.intType;
 	}
+
 	public void visit(CharFactor factor) {
 		factor.struct = Table.charType;
 	}
+
 	public void visit(BoolFactor factor) {
 		factor.struct = Table.boolType;
 	}
-	
+
 	/* --- RELOP --- */
 	public void visit(Equal relop) {
 		relop.obj = new Obj(Obj.Elem, "==", Table.noType);
 	}
+
 	public void visit(NotEqual relop) {
 		relop.obj = new Obj(Obj.Elem, "!=", Table.noType);
 	}
