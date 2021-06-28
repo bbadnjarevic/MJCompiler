@@ -9,7 +9,11 @@ const bool b = false;
 		return sum(1, 2);
 	}
 	void main()
+	int array[];
 	{
 		sum(jedan, 12);
+		if (1 > 2) {
+			print(2);
+		}
 	}
 }

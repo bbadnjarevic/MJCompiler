@@ -332,7 +332,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (designator.getExpr().struct != Table.intType)
 			report_error(designator.getLine(),
 					"Izraz za indeksiranje niza " + designator.getName() + " mora biti tipa int!");
-		designator.obj = new Obj(Obj.Var, designator.obj.getName(), designator.obj.getType().getElemType());
+		designator.obj = new Obj(Obj.Elem, designator.obj.getName(), designator.obj.getType().getElemType());
 	}
 
 	private void handleDesignator(Designator designator, String name) {
@@ -358,7 +358,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj designator = stmt.getDesignator().obj;
 		Struct exprType = stmt.getExpr().struct;
 
-		if (designator.getKind() != Obj.Var)
+		if (designator.getKind() != Obj.Var && designator.getKind() != Obj.Elem)
 			report_error(stmt.getLine(), designator.getName() + " nije promenljiva ili element niz!");
 
 		if (!exprType.assignableTo(designator.getType()))
@@ -529,6 +529,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	// CondFact ::= (CondFact1Expr) Expr
 	public void visit(CondFact1Expr condFact) {
 		condFact.struct = condFact.getExpr().struct;
+		if (condFact.struct != Table.boolType) {
+			report_error(condFact.getLine(), "Izraz mora biti tipa bool!");
+		}
 	}
 	// CondFact ::= (CondFact2Expr) Expr Relop Expr
 	public void visit(CondFact2Expr condFact) {
