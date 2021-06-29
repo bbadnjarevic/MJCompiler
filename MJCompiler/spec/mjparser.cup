@@ -55,7 +55,6 @@ parser code {:
 
 init with {:
 	errorDetected = false;
-	errors = new LinkedList<>();
 :}
 
 scan with {:
@@ -296,7 +295,7 @@ Factor ::= (DesignatorFactor) Designator
 
 DesignatorStatement ::= (Assignement) Designator Assignop Expr SEMI
 					|
-					(ErrorAssigning) Designator error:e SEMI 
+					(ErrorAssigning) error:e 
 					{: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod konstrukcije iskaza dodele", eleft); :}
 					|
 					(DesignatorActPars) FuncDesignator PossibleActPars SEMI

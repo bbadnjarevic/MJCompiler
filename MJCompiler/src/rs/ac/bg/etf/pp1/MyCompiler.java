@@ -64,12 +64,12 @@ public class MyCompiler implements Compiler {
 			// ispis tabele simbola
 			log.info("===================================");
 			Table.dump();
-			
+
+			errors.addAll(lexer.getErrors());
+			errors.addAll(p.getErrors());
+			errors.addAll(v.getErrors());
 			if(p.errorDetected || !v.passed()){
 				log.error("Parsiranje NIJE uspesno zavrseno!");
-				errors.addAll(lexer.getErrors());
-				errors.addAll(p.getErrors());
-				errors.addAll(v.getErrors());
 				return errors.isEmpty() ? null : errors;
 			}
 			
@@ -94,8 +94,8 @@ public class MyCompiler implements Compiler {
 		finally {
 			if (br != null) try { br.close(); } catch (IOException e1) { log.error(e1.getMessage(), e1); }
 		}
-		
-		return null;
+
+		return errors.isEmpty() ? null : errors;
 	}
 
 }

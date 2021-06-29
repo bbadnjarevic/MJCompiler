@@ -4,7 +4,7 @@ program moiProgram
 	
 	{
 		j = 10;
-		j = 1)@)9;
+		j = 1!@)9;
 		print(j); 
 	}
 }
