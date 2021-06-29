@@ -42,10 +42,11 @@ public class MyCompiler implements Compiler {
 			Yylex lexer = new Yylex(br);
 			
 			MJParser p = new MJParser(lexer);
-	        Symbol s = p.parse();  //pocetak parsiranja
-	        
+			
+
 	        Program prog = null;
 	        try {
+	        	Symbol s = p.parse();  //pocetak parsiranja
 	        	prog = (Program)(s.value); 
 	        } catch(ClassCastException e) {
 	        	return p.getErrors();

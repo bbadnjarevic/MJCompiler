@@ -29,9 +29,9 @@ import java.util.*;
 	private void error_handler() {
 		if (error_string.length() > 0) {
 			System.err.println("Leksicka greska (" + error_string + ") u liniji "+(error_line) + " na poziciji: " + (error_column+1 - error_string.length()));
+			errorsList.add(new CompilerError(error_line, error_string, CompilerErrorType.LEXICAL_ERROR));
 			error_string = "";
 		}
-		errorsList.add(new CompilerError(error_line, error_string, CompilerErrorType.LEXICAL_ERROR));
 	}
 	String error_string = "";
 	int error_line, error_column;

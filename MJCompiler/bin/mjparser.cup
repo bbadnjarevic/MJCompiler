@@ -12,7 +12,7 @@ import java.util.*;
 parser code {:
 
 	boolean errorDetected;
-	List<CompilerError> errors;
+	List<CompilerError> errors = new LinkedList<>();;
 	Logger log = Logger.getLogger(getClass());
    
    
@@ -21,24 +21,29 @@ parser code {:
     public void report_fatal_error(String message, Object info) throws java.lang.Exception {
       done_parsing();
       errors.addAll(((Yylex)this.getScanner()).getErrors());
-      report_error(message, info);
+      report_error(message, ((Symbol)info).left);
     }
   
     public void syntax_error(Symbol cur_token) {
-        report_error("Sintaksna greska", cur_token);
+        report_error("Sintaksna greska", cur_token.left);
     }
   
     public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
-        report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token);
+        report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token.left);
     }
 
-    public void report_error(String message, Object info) {
-    	errorDetected = true;
-    	StringBuilder msg = new StringBuilder(message); 
-    	if (info instanceof Symbol)
-            msg.append (" na liniji ").append(((Symbol)info).left);
-        log.error(msg.toString());
-        errors.add(new CompilerError(((Symbol)info).left, message, CompilerErrorType.SYNTAX_ERROR));
+    //public void report_error(String message) {
+    	//errorDetected = true;
+    	//StringBuilder msg = new StringBuilder(message); 
+    	//if (info instanceof Symbol)
+        //    msg.append (" na liniji ").append(((Symbol)info).left);
+        //log.error(msg.toString());
+        //errors.add(new CompilerError(line, message, CompilerErrorType.SYNTAX_ERROR));
+    //}
+    
+    public void report_error(String msg, int line) {
+        log.error("Greska na liniji " + line + ": " + msg.toString());
+        errors.add(new CompilerError(line, msg, CompilerErrorType.SYNTAX_ERROR));
     }
     
     public List<CompilerError> getErrors() {
@@ -144,7 +149,7 @@ Var ::= (ArrayDeclaration) IDENT:varName LSQUARE RSQUARE
 		|
 		(VarDeclaration) IDENT:varName 
 		|
-		(ErrorVar) error:e {: parser.report_error("Izvrsen oporavak od greske na linji " + eleft + ", pri deklerisanju globalne promenljive", null); :}
+		(ErrorVar) error:e {: parser.report_error("Izvrsen oporavak od greske na linji " + eleft + ", pri deklerisanju globalne promenljive", eleft); :}
 		;
 
 			
@@ -189,7 +194,7 @@ FormPars ::= (FormParsList) FormPars COMMA Type Var
 			|
 			(FormParsElem) Type Var
 			|
-			(FormParsError) error:e {: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", pri deklaraciji formalnog parametra funkcije", null); :}
+			(FormParsError) error:e {: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", pri deklaraciji formalnog parametra funkcije", eleft); :}
 			;
 
 /* STATEMENTS */ 
@@ -292,7 +297,7 @@ Factor ::= (DesignatorFactor) Designator
 DesignatorStatement ::= (Assignement) Designator Assignop Expr SEMI
 					|
 					(ErrorAssigning) Designator error:e SEMI 
-					{: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod konstrukcije iskaza dodele", null); :}
+					{: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod konstrukcije iskaza dodele", eleft); :}
 					|
 					(DesignatorActPars) FuncDesignator PossibleActPars SEMI
 					|
@@ -326,7 +331,7 @@ PossibleActPars ::= (WithActPars) LPAREN ActPars RPAREN
 /* CONDITION */
 IfCondition ::= (IfCond) Condition
 			|
-			(IfError) error:e {:  parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod logickog izraza unutar if konstrukcije", null); :}
+			(IfError) error:e {:  parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", kod logickog izraza unutar if konstrukcije", eleft); :}
 			;
 
 Condition ::= (CondTerms) InitOR OR NextOR

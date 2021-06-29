@@ -1,22 +1,10 @@
 program moiProgram
 {
-	void main() bool i; int while; int j;
+	void main() int j;
 	
 	{
-		i = switch(595) {
-			case 1: 
-				print('1');
-			case 2:
-				print('2');
-			case 3:
-				print('3');
-				yield 4;
-			case 4:
-				print('4');
-			default:
-				print('D');
-				yield 500;
-		};
-		print(i);
+		j = 10;
+		j = 1)@)9;
+		print(j); 
 	}
 }
