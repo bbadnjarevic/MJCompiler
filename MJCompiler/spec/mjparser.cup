@@ -5,10 +5,14 @@ package rs.ac.bg.etf.pp1;
 import java_cup.runtime.*;
 import org.apache.log4j.*;
 import rs.ac.bg.etf.pp1.ast.*;
+import rs.ac.bg.etf.pp1.test.CompilerError;
+import rs.ac.bg.etf.pp1.test.CompilerError.CompilerErrorType;
+import java.util.*;
 
 parser code {:
 
 	boolean errorDetected;
+	List<CompilerError> errors;
 	Logger log = Logger.getLogger(getClass());
    
    
@@ -16,6 +20,7 @@ parser code {:
      
     public void report_fatal_error(String message, Object info) throws java.lang.Exception {
       done_parsing();
+      errors.addAll(((Yylex)this.getScanner()).getErrors());
       report_error(message, info);
     }
   
@@ -33,6 +38,11 @@ parser code {:
     	if (info instanceof Symbol)
             msg.append (" na liniji ").append(((Symbol)info).left);
         log.error(msg.toString());
+        errors.add(new CompilerError(((Symbol)info).left, message, CompilerErrorType.SYNTAX_ERROR));
+    }
+    
+    public List<CompilerError> getErrors() {
+    	return errors;
     }
 
 
@@ -40,6 +50,7 @@ parser code {:
 
 init with {:
 	errorDetected = false;
+	errors = new LinkedList<>();
 :}
 
 scan with {:

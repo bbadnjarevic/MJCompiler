@@ -14,6 +14,8 @@
 				<exclude name="SemanticAnalyzer.java" />
 				<exclude name="CodeGenerator.java" />
 				<exclude name="Table.java" />
+				<exclude name="MyCompiler.java" />
+				<exclude name="MyTableDump.java" />
 			</fileset>
 		</delete>
 		<delete>

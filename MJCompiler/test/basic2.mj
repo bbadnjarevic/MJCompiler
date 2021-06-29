@@ -1,6 +1,6 @@
 program moiProgram
 {
-	void main() int i; int j;
+	void main() bool i; int while; int j;
 	
 	{
 		i = switch(595) {

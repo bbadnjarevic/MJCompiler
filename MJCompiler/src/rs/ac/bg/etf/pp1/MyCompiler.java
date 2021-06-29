@@ -21,7 +21,7 @@ import rs.ac.bg.etf.pp1.util.Log4JUtils;
 import rs.etf.pp1.mj.runtime.Code;
 
 public class MyCompiler implements Compiler {
-	
+
 	static {
 		DOMConfigurator.configure(Log4JUtils.instance().findLoggerConfigFile());
 		Log4JUtils.instance().prepareLogFile(Logger.getRootLogger());
@@ -44,7 +44,12 @@ public class MyCompiler implements Compiler {
 			MJParser p = new MJParser(lexer);
 	        Symbol s = p.parse();  //pocetak parsiranja
 	        
-	        Program prog = (Program)(s.value); 
+	        Program prog = null;
+	        try {
+	        	prog = (Program)(s.value); 
+	        } catch(ClassCastException e) {
+	        	return p.getErrors();
+	        }
 	        Table.init();
 	        
 			// ispis sintaksnog stabla
@@ -61,12 +66,13 @@ public class MyCompiler implements Compiler {
 			
 			if(p.errorDetected || !v.passed()){
 				log.error("Parsiranje NIJE uspesno zavrseno!");
+				errors.addAll(lexer.getErrors());
+				errors.addAll(p.getErrors());
 				errors.addAll(v.getErrors());
-				return null;
+				return errors.isEmpty() ? null : errors;
 			}
 			
 			log.info("Parsiranje uspesno zavrseno!");
-			
 			
 			File objFile = new File(outputFilePath);
 			if(objFile.exists()) objFile.delete();

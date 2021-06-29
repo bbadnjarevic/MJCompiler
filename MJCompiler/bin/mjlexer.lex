@@ -2,11 +2,18 @@
 package rs.ac.bg.etf.pp1;
 
 import java_cup.runtime.Symbol;
-
+import rs.ac.bg.etf.pp1.test.CompilerError;
+import rs.ac.bg.etf.pp1.test.CompilerError.CompilerErrorType;
+import java.util.*;
 %%
 
 %{
+	List<CompilerError> errorsList = new LinkedList<>();
 
+    public List<CompilerError> getErrors() {
+    	return errorsList;
+    }
+    
 	// ukljucivanje informacije o poziciji tokena
 	private Symbol new_symbol(int type) {
 		error_handler();
@@ -24,6 +31,7 @@ import java_cup.runtime.Symbol;
 			System.err.println("Leksicka greska (" + error_string + ") u liniji "+(error_line) + " na poziciji: " + (error_column+1 - error_string.length()));
 			error_string = "";
 		}
+		errorsList.add(new CompilerError(error_line, error_string, CompilerErrorType.LEXICAL_ERROR));
 	}
 	String error_string = "";
 	int error_line, error_column;
