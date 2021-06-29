@@ -23,17 +23,31 @@ const char const_M = 'M';
 		i++;
 	}
 	
+	void printArr(int current) int x; {
+		x = 0;
+		do {
+			print(arr[x]);
+			x++;
+		} while (x < current);
+		print(eol);
+	}
+	
 	void main()
 	{
 		i = 0;
 		arr = new char[10];
 		
 		arr[i] = const_M;
+		printArr(i);
 		i++;
 		setCharJ();
+		printArr(i);
 		arr[i] = getCharC();
+		printArr(i);
 		setCharoAt(i);
+		printArr(i);
 		setCharm(arr);
+		printArr(i);
 		
 		if (true || arr[-100] == 'A') {
 			// goes here
@@ -66,6 +80,9 @@ const char const_M = 'M';
 			// doesn't go here
 			print(1);
 		}
+		
+		
+		
 		
 	}
 }

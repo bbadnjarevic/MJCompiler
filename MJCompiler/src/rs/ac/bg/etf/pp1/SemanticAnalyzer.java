@@ -176,7 +176,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			Obj foundObj = Table.findInCurrentScope(obj.getName());
 			if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 				// Var/Const already decalred!
-				report_error(obj.getLevel() ,"'" + obj.getName() + "' vec deklarisano!");
+				report_error(obj.getLevel() ,"'" + obj.getName() + "' vec deklarisano3!");
 			} else if (obj.getType() != null && !type.equals(obj.getType())) {
 				// Type is not equal to const type
 				report_error(obj.getLevel(), "Tip konstante '" + obj.getName() + "' nije dobar!");
@@ -257,6 +257,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	// MethodParams ::= (MethParams) LPAREN FormPars RPAREN
 	public void visit(MethParams methdParams) {
 		currentMethod.setLevel(paramCnt);
+		objDeclList.clear();
 //		currentMethodSymbols = Table.currentScope().getLocals().symbols();
 		Table.chainLocalSymbols(currentMethod);
 	}
@@ -289,7 +290,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	// FormParm ::= (TypeVar) Type Var;
 	public void visit(TypeVar formParm) {
-		formParm.obj = new Obj(Obj.Var, formParm.getVar().obj.getName(), formParm.getType().struct);
+		Struct type = formParm.getType().struct;
+		Obj obj = formParm.getVar().obj;
+		formParm.obj = new Obj(Obj.Var, obj.getName(), obj.getFpPos() == 1 ? new Struct(Struct.Array, type) : type);
 	}
 
 	// FormPars ::= (FormParsList) FormPars COMMA FormParm
@@ -302,7 +305,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 			// Var/Const already decalred!
-			report_error(parsList.getLine(),"'" + obj.getName() + "' vec deklarisano!");
+			report_error(parsList.getLine(),"'" + obj.getName() + "' vec deklarisano1!");
 		} else {
 			paramCnt++;
 			Table.insert(Obj.Var, obj.getName(), obj.getType());
@@ -320,7 +323,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 			// Var/Const already decalred!
-			report_error(parsElem.getLine(), "'" + obj.getName() + "' vec deklarisano!");
+			report_error(parsElem.getLine(), "'" + obj.getName() + "' vec deklarisano2!");
 		} else {
 			paramCnt++;
 			Table.insert(Obj.Var, obj.getName(), obj.getType());
