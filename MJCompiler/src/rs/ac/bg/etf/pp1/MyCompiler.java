@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -29,7 +30,8 @@ public class MyCompiler implements Compiler {
 	@Override
 	public List<CompilerError> compile(String sourceFilePath, String outputFilePath) {
 		
-Logger log = Logger.getLogger(MJParserTest.class);
+		Logger log = Logger.getLogger(MJParserTest.class);
+		List<CompilerError> errors = new LinkedList<>();
 		
 		Reader br = null;
 		try {
@@ -59,7 +61,7 @@ Logger log = Logger.getLogger(MJParserTest.class);
 			
 			if(p.errorDetected || !v.passed()){
 				log.error("Parsiranje NIJE uspesno zavrseno!");
-				// TODO Return errors
+				errors.addAll(v.getErrors());
 				return null;
 			}
 			
@@ -78,10 +80,8 @@ Logger log = Logger.getLogger(MJParserTest.class);
 			log.info("Zavrseno generisanje koda!");
 			
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		finally {

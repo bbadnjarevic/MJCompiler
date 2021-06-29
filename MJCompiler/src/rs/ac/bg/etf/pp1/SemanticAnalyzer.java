@@ -11,6 +11,8 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import rs.ac.bg.etf.pp1.ast.*;
+import rs.ac.bg.etf.pp1.test.CompilerError;
+import rs.ac.bg.etf.pp1.test.CompilerError.CompilerErrorType;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.Obj;
 import rs.etf.pp1.symboltable.concepts.Struct;
@@ -18,6 +20,7 @@ import rs.etf.pp1.symboltable.concepts.Struct;
 public class SemanticAnalyzer extends VisitorAdaptor {
 	boolean mainFound = false;
 	boolean errorDetected = false;
+	List<CompilerError> errors = new LinkedList<>();
 	int switchCnt = 0;
 	int doWhileCnt = 0;
 
@@ -35,6 +38,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	public boolean passed() {
 		return !errorDetected;
+	}
+	
+	public List<CompilerError> getErrors() {
+		return errors;
 	}
 
 	private String getStructString(Struct structToVisit) {
@@ -110,19 +117,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 
 	// Reporting
-	public void report_error(String message, SyntaxNode info) {
-		errorDetected = true;
-//		StringBuilder msg = new StringBuilder(message);
-//		int line = (info == null) ? 0 : info.getLine();
-//		if (line != 0)
-//			msg.append(" na liniji ").append(line);
-		log.error(message);
-	}
-
 	public void report_error(int line, String msg) {
 		errorDetected = true;
 		String message = "Greska na liniji %d: " + msg;
 		log.error(String.format(message, line));
+		errors.add(new CompilerError(line, msg, CompilerErrorType.SEMANTIC_ERROR));
 	}
 
 	public void report_info(String message, SyntaxNode info) {
@@ -146,7 +145,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				obj.setAdr(i++);
 
 		if (!mainFound)
-			report_error("Mora postojati main metoda tipa void i bez argumenata!", null);
+			report_error(program.getLine(), "Mora postojati main metoda tipa void i bez argumenata!");
 	}
 
 	public void visit(ProgName progName) {
@@ -159,16 +158,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj typeNode = Table.find(type.getTypeName());
 
 		if (typeNode == Table.noObj) {
-			report_error("Greska na liniji " + type.getLine() + ": Nije pronadjen tip " + type.getTypeName()
-					+ " u tabeli simbola! ", null);
+			report_error(type.getLine(),"Nije pronadjen tip " + type.getTypeName() + " u tabeli simbola!");
 			type.struct = Table.noType;
 		} else {
 			if (typeNode.getKind() == Obj.Type) {
 				type.struct = typeNode.getType();
 			} else {
-				report_error(
-						"Greska na liniji " + type.getLine() + ": '" + type.getTypeName() + "' ne predstavlja tip!",
-						type);
+				report_error(type.getLine(),"'" + type.getTypeName() + "' ne predstavlja tip!");
 				type.struct = Tab.noType;
 			}
 		}
@@ -180,7 +176,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			Obj foundObj = Table.findInCurrentScope(obj.getName());
 			if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 				// Var/Const already decalred!
-				report_error("Greska na liniji " + obj.getLevel() + ": '" + obj.getName() + "' vec deklarisano!", null);
+				report_error(obj.getLevel() ,"'" + obj.getName() + "' vec deklarisano!");
 			} else if (obj.getType() != null && !type.equals(obj.getType())) {
 				// Type is not equal to const type
 				report_error(obj.getLevel(), "Tip konstante '" + obj.getName() + "' nije dobar!");
@@ -299,7 +295,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 			// Var/Const already decalred!
-			report_error("Greska na liniji " + parsList.getLine() + ": '" + obj.getName() + "' vec deklarisano!", null);
+			report_error(parsList.getLine(),"'" + obj.getName() + "' vec deklarisano!");
 		} else {
 			paramCnt++;
 			Table.insert(Obj.Var, obj.getName(), obj.getType());
@@ -314,7 +310,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
 			// Var/Const already decalred!
-			report_error("Greska na liniji " + parsElem.getLine() + ": '" + obj.getName() + "' vec deklarisano!", null);
+			report_error(parsElem.getLine(), "'" + obj.getName() + "' vec deklarisano!");
 		} else {
 			paramCnt++;
 			Table.insert(Obj.Var, obj.getName(), obj.getType());
@@ -342,7 +338,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		String msg = "Pretraga na liniji " + designator.getLine() + "(";
 		Obj obj = Table.find(name);
 		if (obj == Tab.noObj)
-			report_error(msg + name + "), nije nadjeno! ", null);
+			report_error(designator.getLine(), msg + name + "), nije nadjeno! ");
 		else
 			report_info(msg + name + "), nadjeno " + getObjString(obj), null);
 
@@ -357,7 +353,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		String msg = "Pretraga na liniji " + designator.getLine() + "(";
 		Obj obj = Table.find(name);
 		if (obj == Tab.noObj)
-			report_error(msg + name + "), nije nadjeno! ", null);
+			report_error(designator.getLine(), msg + name + "), nije nadjeno! ");
 		else
 			report_info(msg + name + "), nadjeno " + getObjString(obj), null);
 
