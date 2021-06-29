@@ -33,7 +33,7 @@ char bCharGlobalVar;
         negOneVar = -oneConst;
         twoVar = 2;
 
-        charArray = new char[-negOneVar + twoVar * oneConst + oneConst];
+        charArray = new char[twoVar * oneConst + oneConst + oneConst];
 
         charArray[0] = aCharConst;
         charArray[1] = bCharGlobalVar;

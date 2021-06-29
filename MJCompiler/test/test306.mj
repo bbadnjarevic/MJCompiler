@@ -1,0 +1,101 @@
+//Class/Array manipulation tests
+
+program correctSyntax
+
+const bool trueConst = true;
+const bool falseConst = false;
+const int zeroConst = 0;
+const int oneConst = 1;
+
+int negOneVar;
+int twoVar;
+
+const char aCharConst = 'A';
+char bCharGlobalVar;
+
+{
+    void setbGlobalChar() {
+        bCharGlobalVar = 'B';
+    }
+
+    char dCharMethodResult() {
+        return 'D';
+    }
+
+    void main()
+        char cCharLocalVar;
+        char charArray[];
+        int loopOne, loopTwo, loopThree;
+    {
+        cCharLocalVar = 'C';
+        setbGlobalChar();
+
+        negOneVar = -oneConst;
+        twoVar = 2;
+
+        charArray = new char[twoVar * oneConst + oneConst + oneConst];
+
+        charArray[0] = aCharConst;
+        charArray[1] = bCharGlobalVar;
+        charArray[2] = cCharLocalVar;
+        charArray[3] = dCharMethodResult();
+
+		        // Expected output ABC
+        loopOne = 4;
+        loopTwo = 70;
+        loopThree = 200;
+
+        loopOne = switch(loopOne) {
+            case 0:
+            case 1:
+            case 2:
+                yield 1;
+            case 3:
+            case 4:
+            case 5:
+                // let's go to default here
+                loopTwo = switch(loopTwo) {
+                    case 0:
+                        yield 0;
+                    case 1:
+                        yield 0;
+                    case 2:
+                        yield 0;
+                    default:
+                        loopThree = switch(loopThree) {
+                            case 200:
+                                yield 2;
+                            case 6:
+                            case 3:
+                                yield 0;
+                            case 1:
+                            case 0:
+                                yield 0;
+                            case 11:
+                            case 22:
+                                yield 0;
+                            default:
+                                if (true) {
+                                    yield 0;
+                                }
+                                else {
+                                    yield 1;
+                                }
+                        };
+                        yield 1;
+                };
+                yield 0;
+            case 6:
+            case 7:
+            case 8:
+            default:
+                yield 1;
+        };
+
+        print(charArray[loopOne]);
+        print(charArray[loopTwo]);
+        print(charArray[loopThree]);
+        print(eol);
+    }
+}
+

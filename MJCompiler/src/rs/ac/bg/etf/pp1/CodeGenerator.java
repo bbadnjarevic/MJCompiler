@@ -1,5 +1,7 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Stack;
 
 import javax.xml.stream.events.EndDocument;
@@ -8,11 +10,13 @@ import rs.ac.bg.etf.pp1.ast.AfterIf;
 import rs.ac.bg.etf.pp1.ast.Assignement;
 import rs.ac.bg.etf.pp1.ast.BoolFactor;
 import rs.ac.bg.etf.pp1.ast.BreakStmt;
+import rs.ac.bg.etf.pp1.ast.Cases;
 import rs.ac.bg.etf.pp1.ast.CharFactor;
 import rs.ac.bg.etf.pp1.ast.CondFact1Expr;
 import rs.ac.bg.etf.pp1.ast.CondFact2Expr;
 import rs.ac.bg.etf.pp1.ast.ContinueStmt;
 import rs.ac.bg.etf.pp1.ast.Decrease;
+import rs.ac.bg.etf.pp1.ast.DefaultCase;
 import rs.ac.bg.etf.pp1.ast.DesignatorActPars;
 import rs.ac.bg.etf.pp1.ast.DesignatorFactor;
 import rs.ac.bg.etf.pp1.ast.DesignatorFactorActPars;
@@ -28,11 +32,15 @@ import rs.ac.bg.etf.pp1.ast.GreaterThen;
 import rs.ac.bg.etf.pp1.ast.GreaterThenEqual;
 import rs.ac.bg.etf.pp1.ast.Increase;
 import rs.ac.bg.etf.pp1.ast.InitAND;
+import rs.ac.bg.etf.pp1.ast.InitCase;
+import rs.ac.bg.etf.pp1.ast.InitDefaultCase;
 import rs.ac.bg.etf.pp1.ast.InitDoWhile;
 import rs.ac.bg.etf.pp1.ast.InitElse;
 import rs.ac.bg.etf.pp1.ast.InitIf;
 import rs.ac.bg.etf.pp1.ast.InitOR;
+import rs.ac.bg.etf.pp1.ast.InitSwitch;
 import rs.ac.bg.etf.pp1.ast.InitThen;
+import rs.ac.bg.etf.pp1.ast.InitYield;
 import rs.ac.bg.etf.pp1.ast.LessThen;
 import rs.ac.bg.etf.pp1.ast.LessThenEqual;
 import rs.ac.bg.etf.pp1.ast.MethodDecl;
@@ -44,6 +52,7 @@ import rs.ac.bg.etf.pp1.ast.NegTerms;
 import rs.ac.bg.etf.pp1.ast.NewFactorArray;
 import rs.ac.bg.etf.pp1.ast.NextAND;
 import rs.ac.bg.etf.pp1.ast.NextOR;
+import rs.ac.bg.etf.pp1.ast.NoCase;
 import rs.ac.bg.etf.pp1.ast.NonVoidMethod;
 import rs.ac.bg.etf.pp1.ast.NotEqual;
 import rs.ac.bg.etf.pp1.ast.NumFactor;
@@ -55,11 +64,13 @@ import rs.ac.bg.etf.pp1.ast.ReadStmt;
 import rs.ac.bg.etf.pp1.ast.ReturnStmt;
 import rs.ac.bg.etf.pp1.ast.ReturnVoid;
 import rs.ac.bg.etf.pp1.ast.SkipElse;
+import rs.ac.bg.etf.pp1.ast.SwitchExpr;
 import rs.ac.bg.etf.pp1.ast.SyntaxNode;
 import rs.ac.bg.etf.pp1.ast.TermList;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
 import rs.ac.bg.etf.pp1.ast.VoidMethod;
 import rs.ac.bg.etf.pp1.ast.WhileConditionInit;
+import rs.ac.bg.etf.pp1.ast.YieldStmt;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.concepts.Obj;
 import rs.etf.pp1.symboltable.concepts.Struct;
@@ -97,6 +108,9 @@ public class CodeGenerator extends VisitorAdaptor {
 	private Stack<JumpType> jumpType = new Stack<>();
 	private Stack<Stack<Integer>> continueFixup = new Stack<>();
 	private Stack<Stack<Integer>> breakFixup = new Stack<>();
+	private Stack<Integer> prevCase = new Stack<>();
+	private Stack<List<Integer>> yieldJump = new Stack<>();
+	private Stack<Integer> fallthroughCases = new Stack<>();
 
 	public void visit(ProgName progName) {
 		Obj obj = null;
@@ -268,6 +282,15 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.putJump(0);
 	}
 	
+	// Yield
+	public void visit(InitYield stmt) {
+		Code.put(Code.pop);
+	}
+	public void visit(YieldStmt stmt) {
+		yieldJump.lastElement().add(Code.pc + 1);
+		Code.putJump(0);
+	}
+	
 	
 	// Conditions
 	// InitOR
@@ -416,6 +439,49 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	public void visit(FactorList term) {
 		Code.put(operationsStack.pop());
+	}
+	
+	// SwitchExpr
+	public void visit(InitSwitch expr) {
+		yieldJump.push(new LinkedList<>());
+		prevCase.push(-1);
+		fallthroughCases.push(-1);
+	}
+	public void visit(InitCase initCase) {
+		int prevCasePC = prevCase.pop();
+		if (prevCasePC != -1) {
+			Code.fixup(prevCasePC);
+		}
+		Code.put(Code.dup);
+		Code.loadConst(initCase.getNum());
+		prevCase.push(Code.pc + 1); 
+		Code.putFalseJump(Code.eq, 0);
+		
+		int prevCaseFall = fallthroughCases.pop();
+		if (prevCaseFall != -1)
+			Code.fixup(prevCaseFall);
+	}
+	public void visit(InitDefaultCase cases) {
+		int prevCasePC = prevCase.pop();
+		if (prevCasePC != -1) {
+			Code.fixup(prevCasePC);
+		}
+
+		int prevCaseFall = fallthroughCases.pop();
+		if (prevCaseFall != -1)
+			Code.fixup(prevCaseFall);
+	}
+	public void visit(DefaultCase cases) {
+		Code.put(Code.trap);
+		Code.put(2);
+	}
+	public void visit(SwitchExpr expr) {
+		for(Integer i: yieldJump.pop())
+			Code.fixup(i);
+	}
+	public void visit(Cases cases) {
+		fallthroughCases.push(Code.pc + 1);
+		Code.putJump(0);
 	}
 
 	// Operations

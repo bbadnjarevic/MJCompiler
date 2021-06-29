@@ -71,7 +71,8 @@ nonterminal RepeatedDesignator, DesignatorStatement, DesignatorOptions;
 nonterminal Assignop, Addop, Mulop;
 nonterminal IfCondition;
 nonterminal InitDoWhile, InitSwitch, InitOR, InitAND, NextOR, NextAND;
-nonterminal InitThen, InitElse, AfterIf, SkipElse, EndDoWhile, InitIf, WhileConditionInit;
+nonterminal InitThen, InitElse, AfterIf, SkipElse, EndDoWhile, InitIf, WhileConditionInit, InitYield;
+nonterminal InitCase, InitDefaultCase;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, FuncDesignator, Designator, Var, Relop;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ElemAccess;
@@ -193,7 +194,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorSt
 			|
 			(DoWhileStmt) InitDoWhile DO Statement WHILE WhileConditionInit Condition RPAREN EndDoWhile
 			|
-			(YieldStmt) YIELD Expr SEMI
+			(YieldStmt) InitYield Expr SEMI
 			|
 			(BreakStmt) BREAK:b SEMI
 			|
@@ -211,7 +212,8 @@ Statement ::= (DesignatorStmt) DesignatorStatement /* SEMI moved to DesignatorSt
 			|
 			(MoreStmts) LBRACE StatementList RBRACE
 			;
-			
+
+InitYield ::= (InitYield) YIELD ;		
 InitDoWhile ::= (InitDoWhile) ;
 WhileConditionInit ::= (WhileConditionInit) LPAREN;
 InitIf ::= (InitIf) IF ;
@@ -231,13 +233,16 @@ Expr ::= (BasicTerms) Terms
 		
 InitSwitch ::= (InitSwitch) ;
 					
-CaseList ::= (Cases) CaseList CASE NUM_CONST:num COLON StatementList
+CaseList ::= (Cases) CaseList InitCase COLON StatementList
 			|
 			(NoCase) /* epsilon */
 			;
-			
-DefaultCase ::= (DefaultCase) DEFAULT COLON StatementList
+
+DefaultCase ::= (DefaultCase) InitDefaultCase COLON StatementList
 ;
+
+InitCase ::= (InitCase) CASE NUM_CONST:num;
+InitDefaultCase ::= (InitDefaultCase) DEFAULT ;
 		
 /* TERM */
 Terms ::= (TermList) Terms Addop Term

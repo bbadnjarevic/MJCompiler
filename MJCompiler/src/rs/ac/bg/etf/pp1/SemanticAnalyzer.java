@@ -379,7 +379,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (designator.getKind() != Obj.Var && designator.getKind() != Obj.Elem)
 			report_error(stmt.getLine(), designator.getName() + " nije promenljiva ili element niz!");
 
-		if (!exprType.assignableTo(designator.getType()))
+		if (exprType != null && !exprType.assignableTo(designator.getType()))
 			report_error(stmt.getLine(), "Nekompatibilna dodela!");
 
 	}
@@ -496,6 +496,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error(stmt.getLine(), "Uslovni izraz unutar do-while petlje mora biti tipa bool!");
 
 		doWhileCnt--;
+		stmt.struct = stmt.getStatement().struct;
 	}
 
 	// InitDoWhile
@@ -521,6 +522,24 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Struct stmtType = stmtList.getStatement().struct;
 
 		stmtList.struct = stmtListType != null ? stmtListType : stmtType;
+	}
+	
+	// Statement ::= (IfStmt) InitIf LPAREN IfCondition RPAREN InitThen Statement AfterIf
+	public void visit(IfStmt stmt) {
+		stmt.struct = stmt.getStatement().struct;
+	}
+	
+	// Statement ::= (IfElseStmt) InitIf LPAREN IfCondition RPAREN InitThen Statement SkipElse InitElse Statement AfterIf
+	public void visit(IfElseStmt stmt) {
+		if (stmt.getStatement().struct != null && stmt.getStatement1().struct != null 
+				&& stmt.getStatement().struct != stmt.getStatement1().struct)
+			report_error(stmt.getLine(), "Sve yield naredbe moraju vracati isti tip!");
+		stmt.struct = stmt.getStatement().struct != null ? stmt.getStatement().struct : stmt.getStatement1().struct;
+	}
+	
+	// Statement ::= (MoreStmts) LBRACE StatementList RBRACE
+	public void visit(MoreStmts stmt) {
+		stmt.struct = stmt.getStatementList().struct;
 	}
 
 	/* --- CONDITION --- */
@@ -608,7 +627,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		caseStack.push(new HashSet<Integer>());
 	}
 
-	// CaseList ::= (Cases) CaseList CASE NUM_CONST COLON StatementList
+	// CaseList ::= (Cases) CaseList InitCass COLON StatementList
 	public void visit(Cases caseList) {
 		Struct caseListType = caseList.getCaseList().struct;
 		Struct stmtListType = caseList.getStatementList().struct;
@@ -621,9 +640,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		else if (stmtListType != null)
 			caseList.struct = stmtListType;
 
-		Integer num = caseList.getNum();
+	}
+	
+	// InitCase ::= (InitCase) CASE NUM_CONST:num
+	public void visit(InitCase initCase) {
+		Integer num = initCase.getNum();
 		if (caseStack.lastElement().contains(num))
-			report_error(caseList.getLine(), "Ne sme postojati vise case grana sa istom celobrojnom konstantom!");
+			report_error(initCase.getLine(), "Ne sme postojati vise case grana sa istom celobrojnom konstantom!");
 		caseStack.lastElement().add(num);
 	}
 

@@ -1,16 +1,22 @@
 program moiProgram
 {
-	void main() int i; int j;{
-		i = 0;
-		do {
-			print('|');
-			i++;
-			j = 0;
-			do {
-				print('-');
-				j++;
-			} while (j < 2);
-			
-		} while (i < 4);
+	void main() int i; int j;
+	
+	{
+		i = switch(595) {
+			case 1: 
+				print('1');
+			case 2:
+				print('2');
+			case 3:
+				print('3');
+				yield 4;
+			case 4:
+				print('4');
+			default:
+				print('D');
+				yield 500;
+		};
+		print(i);
 	}
 }
