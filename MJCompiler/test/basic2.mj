@@ -1,44 +1,71 @@
 program semGreske
-int while;
+char arr[];
 int i;
-const bool cnst = true;
-const bool c1 = 'A';
-
+const char const_M = 'M';
 {
-	void func(char x) {
-		x++;
+	void setCharJ() {
+		arr[i] = 'J';
+		i++;
 	}
 	
-	int main() int j;
-	{
-		i = 'A';
+	char getCharC() {
+		i++;
+		return 'C';
+	}
 	
-		cnst = false;
+	void setCharoAt(int i) {
+		arr[i] = 'o';
+		i++;
+	}
+	
+	void setCharm(char arr[]) {
+		arr[i] = 'm';
+		i++;
+	}
+	
+	void main()
+	{
+		i = 0;
+		arr = new char[10];
 		
-		f(j);
+		arr[i] = const_M;
+		i++;
+		setCharJ();
+		arr[i] = getCharC();
+		setCharoAt(i);
+		setCharm(arr);
 		
-		func(j);
-		
-		j = switch(5) {
-			case 1:
-				yield 'A';
-			default:
-				yield 0;
-		};
-		
-		j = switch(j) {
-			case 1:
-				yield 'B';
-			default:
-				yield 'X';
-		};
-		
-		if (1) {
-			print('T');
+		if (true || arr[-100] == 'A') {
+			// goes here
+			arr[i] = 'p';
+			i++;
+			if (1 > 2 &&  arr[-200] == 'A') {
+				// doesn't go here
+				print(2);
+			} else if (true) {
+				// goes here
+				do {
+					arr[i] = switch(i) {
+						case 6: yield 'i';
+						case 7:
+							arr[i] = 'l';
+							i++;
+						case 8:
+							arr[i] = 'e';
+							i++;
+						default:
+							yield 'r';		
+					};
+					i++;
+				} while (i < 10);
+			} else {
+				// doesn't go here
+				print(3);
+			}
 		} else {
-			print('E');
+			// doesn't go here
+			print(1);
 		}
 		
-		i();
 	}
 }

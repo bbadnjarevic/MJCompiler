@@ -342,6 +342,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		designator.obj = new Obj(Obj.Elem, designator.obj.getName(), designator.obj.getType().getElemType());
 		
 	}
+	
+	// (DesignatorWithExpr) ElemAccess LSQUARE Expr RSQUARE
+	// ElemAccess ::= (ElemAccess) IDENT:name; 
 	public void visit(ElemAccess designator) {
 		String name = designator.getName();
 
@@ -354,7 +357,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 		designator.obj = obj;
 		
-		if (designator.obj.getType().getKind() != Struct.Array) {
+		if (designator.obj.getType().getKind() != Struct.Array && designator.obj.getKind() != Obj.Elem) {
 			report_error(designator.getLine(), name + " nije moguce indeksirati!");
 		}
 	}
