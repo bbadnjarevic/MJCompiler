@@ -1,0 +1,33 @@
+program oporavakOdGreske
+// Deklarisanje prom
+int while;
+int i, while, x;
+
+{
+	// Formalni parametri
+	void f(int 1, int c, int 35) {
+		print(c);
+	}
+
+	void main() int j;
+	{
+		// Dodela
+		j = 10;
+		j = 1!@)9;
+		print(j);
+		 
+		i = -1;
+		f(2);
+		print(i);
+		
+		// If condition
+		if (1 < 2 && void) {
+			print('T', 5);
+		} else {
+			print('E', 5);
+		}
+		
+		print(eol);
+		print('X');
+	}
+}

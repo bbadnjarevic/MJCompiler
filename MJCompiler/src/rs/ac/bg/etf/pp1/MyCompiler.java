@@ -63,7 +63,7 @@ public class MyCompiler implements Compiler {
 			
 			// ispis tabele simbola
 			log.info("===================================");
-			Table.dump();
+			Table.dumpTable(log);
 
 			errors.addAll(lexer.getErrors());
 			errors.addAll(p.getErrors());

@@ -1,5 +1,4 @@
 program semGreske
-int while;
 int i;
 const bool cnst = true;
 const bool c1 = 'A';

@@ -5,10 +5,12 @@ import java_cup.runtime.Symbol;
 import rs.ac.bg.etf.pp1.test.CompilerError;
 import rs.ac.bg.etf.pp1.test.CompilerError.CompilerErrorType;
 import java.util.*;
+import org.apache.log4j.*;
 %%
 
 %{
 	List<CompilerError> errorsList = new LinkedList<>();
+	Logger log = Logger.getLogger(getClass());
 
     public List<CompilerError> getErrors() {
     	return errorsList;
@@ -28,7 +30,7 @@ import java.util.*;
 	
 	private void error_handler() {
 		if (error_string.length() > 0) {
-			System.err.println("Leksicka greska (" + error_string + ") u liniji "+(error_line) + " na poziciji: " + (error_column+1 - error_string.length()));
+			log.error("Leksicka greska (" + error_string + ") u liniji "+(error_line) + " na poziciji: " + (error_column+1 - error_string.length()));
 			errorsList.add(new CompilerError(error_line, error_string, CompilerErrorType.LEXICAL_ERROR));
 			error_string = "";
 		}

@@ -286,11 +286,18 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		paramCnt = 0;
 		currentMethod = null;
 	}
+	
+	// FormParm ::= (TypeVar) Type Var;
+	public void visit(TypeVar formParm) {
+		formParm.obj = new Obj(Obj.Var, formParm.getVar().obj.getName(), formParm.getType().struct);
+	}
 
-	// FormPars ::= (FormParsList) FormPars COMMA Type Var
+	// FormPars ::= (FormParsList) FormPars COMMA FormParm
 	public void visit(FormParsList parsList) {
 		objDeclList.clear();
-		Obj obj = new Obj(Obj.Var, parsList.getVar().obj.getName(), parsList.getType().struct);
+		if (parsList.getFormParm()== null || parsList.getFormParm().obj == null)
+			return;
+		Obj obj = new Obj(Obj.Var, parsList.getFormParm().obj.getName(), parsList.getFormParm().obj.getType());
 
 		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {
@@ -303,9 +310,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 
 	}
 
-	// FormPars ::= (FormParsElem) Type Var
+	// FormPars ::= (FormParsElem) FormParm
 	public void visit(FormParsElem parsElem) {
-		Obj obj = new Obj(Obj.Var, parsElem.getVar().obj.getName(), parsElem.getType().struct);
+		if (parsElem.getFormParm() == null || parsElem.getFormParm().obj == null)
+			return;
+		
+		Obj obj = new Obj(Obj.Var, parsElem.getFormParm().obj.getName(), parsElem.getFormParm().obj.getType());
 
 		Obj foundObj = Table.findInCurrentScope(obj.getName());
 		if (foundObj != Table.noObj && foundObj.getKind() != Obj.Prog) {

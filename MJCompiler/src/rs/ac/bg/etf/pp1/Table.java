@@ -1,5 +1,7 @@
 package rs.ac.bg.etf.pp1;
 
+import org.apache.log4j.Logger;
+
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.*;
 import rs.etf.pp1.symboltable.visitors.DumpSymbolTableVisitor;
@@ -31,12 +33,12 @@ public class Table extends Tab {
 	}
 	
 	/** Stampa sadrzaj tabele simbola. */
-	public static void dump() {
-		System.out.println("=====================SYMBOL TABLE DUMP=========================");
+	public static void dumpTable(Logger log) {
+		log.info("=====================SYMBOL TABLE DUMP=========================");
 		SymbolTableVisitor stv = new MyTableDump();
 		for (Scope s = currentScope; s != null; s = s.getOuter()) {
 			s.accept(stv);
 		}
-		System.out.println(stv.getOutput());
+		log.info(stv.getOutput());
 	}
 }

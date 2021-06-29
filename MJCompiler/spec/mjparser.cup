@@ -91,7 +91,7 @@ nonterminal InitCase, InitDefaultCase;
 nonterminal NegMinus;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, FuncDesignator, Designator, Var, Relop;
-nonterminal rs.etf.pp1.symboltable.concepts.Obj ElemAccess;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj ElemAccess, FormParm;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, Expr, Terms, Term, Factor, Condition, CondTerm, CondFact;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct StatementList, Statement, CaseList, DefaultCase;
 
@@ -111,6 +111,8 @@ DeclarationsList ::= (ConstDeclarationsList) DeclarationsList ConstDecl
 				(ClassDeclarationsList) DeclarationsList ClassDecl
 				|
 				(NoDecls) /* epsilon */
+				|
+				(DeclListErrors) error:e {: parser.report_error("Izvrsen oporavak od greske na linji " + eleft + ", pri deklerisanju globalne promenljive", eleft); :}
 				;
 
 				
@@ -132,7 +134,8 @@ ConstDeclElem ::= (NumConstDecl) IDENT:constName EQUAL NUM_CONST:constVal
 
 
 /* VAR DECL */
-VarDecl ::= (VarDecl) Type:varType VarList SEMI;
+VarDecl ::= (VarDecl) Type:varType VarList SEMI
+		;
 
 VarDeclList ::= (VarDeclarationList) VarDeclList VarDecl
 			|
@@ -189,11 +192,14 @@ MethodParams ::= (MethParams) LPAREN FormPars RPAREN
 				(NoParams) LPAREN RPAREN
 				;
 
-FormPars ::= (FormParsList) FormPars COMMA Type Var
+FormPars ::= (FormParsList) FormPars COMMA FormParm
 			|
-			(FormParsElem) Type Var
+			(FormParsElem) FormParm
+			;
+			
+FormParm ::= (TypeVar) Type Var
 			|
-			(FormParsError) error:e {: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", pri deklaraciji formalnog parametra funkcije", eleft); :}
+			(FormParmError) error:e {: parser.report_error("Izvrsen oporavak od greske na liniji " + eleft + ", pri deklaraciji formalnog parametra funkcije", eleft); :}
 			;
 
 /* STATEMENTS */ 
