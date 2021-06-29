@@ -15,7 +15,6 @@ const char const_M = 'M';
 	
 	void setCharoAt(int i) {
 		arr[i] = 'o';
-		i++;
 	}
 	
 	void setCharm(char arr[]) {
@@ -23,13 +22,12 @@ const char const_M = 'M';
 		i++;
 	}
 	
-	void printArr(int current) int x; {
+	void printArr(int len) int x; {
 		x = 0;
 		do {
 			print(arr[x]);
 			x++;
-		} while (x < current);
-		print(eol);
+		} while (x < len);
 	}
 	
 	void main()
@@ -38,21 +36,22 @@ const char const_M = 'M';
 		arr = new char[10];
 		
 		arr[i] = const_M;
-		printArr(i);
 		i++;
+		
 		setCharJ();
-		printArr(i);
+		
 		arr[i] = getCharC();
-		printArr(i);
+		
 		setCharoAt(i);
-		printArr(i);
+		i++;
+		
 		setCharm(arr);
-		printArr(i);
 		
 		if (true || arr[-100] == 'A') {
 			// goes here
 			arr[i] = 'p';
 			i++;
+		
 			if (1 > 2 &&  arr[-200] == 'A') {
 				// doesn't go here
 				print(2);
@@ -60,15 +59,15 @@ const char const_M = 'M';
 				// goes here
 				do {
 					arr[i] = switch(i) {
-						case 6: yield 'i';
+						case 6: 
+							yield 'i';
 						case 7:
-							arr[i] = 'l';
-							i++;
+							yield 'l';
 						case 8:
-							arr[i] = 'e';
 							i++;
+							arr[i] = 'r';
 						default:
-							yield 'r';		
+							yield 'e';		
 					};
 					i++;
 				} while (i < 10);
@@ -81,8 +80,6 @@ const char const_M = 'M';
 			print(1);
 		}
 		
-		
-		
-		
+		printArr(len(arr));
 	}
 }
