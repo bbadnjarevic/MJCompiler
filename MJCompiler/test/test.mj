@@ -1,4 +1,4 @@
-program semGreske
+program test
 char arr[];
 int i;
 const char const_M = 'M';

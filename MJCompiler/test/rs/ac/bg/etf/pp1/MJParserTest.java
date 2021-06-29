@@ -9,7 +9,7 @@ public class MJParserTest {
 
 	public static void main(String[] args) {
 		Compiler compiler = new MyCompiler();
-		List<CompilerError> errors = compiler.compile("test/basic2.mj", "test/program.obj");
+		List<CompilerError> errors = compiler.compile("test/test302.mj", "test/program.obj");
 		if (errors != null)
 			for (CompilerError e : errors)
 				System.out.println(e.toString());
