@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="MJCompiler" default="disasm" basedir=".">
+<project name="MJCompiler" default="runDbg" basedir=".">
 	<target name="disasm">
 		<java classname="rs.etf.pp1.mj.runtime.disasm">
 			<arg value="test/program.obj" />
@@ -8,12 +8,13 @@
 			</classpath>
 		</java>
 	</target>
-
-	<target name="runObj" depends="disasm">
+	
+	<target name="runDbg" depends="disasm" >
 		<java classname="rs.etf.pp1.mj.runtime.Run">
-			<arg value="test/program.obj" />
+			<arg value="test/program.obj"/>
+			<arg value="-debug"/>
 			<classpath>
-				<pathelement location="lib/mj-runtime-1.1.jar" />
+				<pathelement location="lib/mj-runtime-1.1.jar"/>
 			</classpath>
 		</java>
 	</target>

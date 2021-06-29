@@ -7,30 +7,33 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-
-import java_cup.runtime.Symbol;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
+import java_cup.runtime.Symbol;
 import rs.ac.bg.etf.pp1.ast.Program;
+import rs.ac.bg.etf.pp1.test.Compiler;
+import rs.ac.bg.etf.pp1.test.CompilerError;
 import rs.ac.bg.etf.pp1.util.Log4JUtils;
 import rs.etf.pp1.mj.runtime.Code;
 
-public class MJParserTest {
-
+public class MyCompiler implements Compiler {
+	
 	static {
 		DOMConfigurator.configure(Log4JUtils.instance().findLoggerConfigFile());
 		Log4JUtils.instance().prepareLogFile(Logger.getRootLogger());
 	}
-	
-	public static void main(String[] args) throws Exception {
+
+	@Override
+	public List<CompilerError> compile(String sourceFilePath, String outputFilePath) {
 		
-		Logger log = Logger.getLogger(MJParserTest.class);
+Logger log = Logger.getLogger(MJParserTest.class);
 		
 		Reader br = null;
 		try {
-			File sourceCode = new File("test/test302.mj");
+			File sourceCode = new File(sourceFilePath);
 			log.info("Compiling source file: " + sourceCode.getAbsolutePath());
 			
 			br = new BufferedReader(new FileReader(sourceCode));
@@ -49,10 +52,6 @@ public class MJParserTest {
 			// ispis prepoznatih programskih konstrukcija
 			SemanticAnalyzer v = new SemanticAnalyzer();
 			prog.traverseBottomUp(v); 
-	      
-//			log.info(" Print count calls = " + v.printCallCount);
-//
-//			log.info(" Deklarisanih promenljivih ima = " + v.varDeclCount);
 			
 			// ispis tabele simbola
 			log.info("===================================");
@@ -60,13 +59,14 @@ public class MJParserTest {
 			
 			if(p.errorDetected || !v.passed()){
 				log.error("Parsiranje NIJE uspesno zavrseno!");
-				return;
+				// TODO Return errors
+				return null;
 			}
 			
 			log.info("Parsiranje uspesno zavrseno!");
 			
 			
-			File objFile = new File("test/program.obj");
+			File objFile = new File(outputFilePath);
 			if(objFile.exists()) objFile.delete();
 			
 			CodeGenerator codeGenerator = new CodeGenerator();
@@ -75,12 +75,20 @@ public class MJParserTest {
 			Code.mainPc = codeGenerator.getMainPc();
 			Code.write(new FileOutputStream(objFile));
 			
+			log.info("Zavrseno generisanje koda!");
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} 
 		finally {
 			if (br != null) try { br.close(); } catch (IOException e1) { log.error(e1.getMessage(), e1); }
 		}
-
+		
+		return null;
 	}
-	
-	
+
 }

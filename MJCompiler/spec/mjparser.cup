@@ -73,6 +73,7 @@ nonterminal IfCondition;
 nonterminal InitDoWhile, InitSwitch, InitOR, InitAND, NextOR, NextAND;
 nonterminal InitThen, InitElse, AfterIf, SkipElse, EndDoWhile, InitIf, WhileConditionInit, InitYield;
 nonterminal InitCase, InitDefaultCase;
+nonterminal NegMinus;
 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ProgName, Program, MethodDecl, MethodTypeName, FuncDesignator, Designator, Var, Relop;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj ElemAccess;
@@ -226,10 +227,12 @@ EndDoWhile ::= (EndDoWhile) SEMI ;
 /* EXPR */
 Expr ::= (BasicTerms) Terms
 		|
-		(NegTerms) MINUS Terms
+		(NegTerms) NegMinus Terms
 		|
 		(SwitchExpr) InitSwitch SWITCH LPAREN Expr RPAREN LBRACE CaseList DefaultCase RBRACE
 		;
+		
+NegMinus ::= (NegMinus) MINUS;
 		
 InitSwitch ::= (InitSwitch) ;
 					

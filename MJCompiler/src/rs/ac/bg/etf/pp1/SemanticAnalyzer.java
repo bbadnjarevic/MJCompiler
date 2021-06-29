@@ -476,7 +476,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	// Statement ::= (ReadStmt) READ LPAREN Designator RPAREN SEMI
 	public void visit(ReadStmt stmt) {
 		Obj d = stmt.getDesignator().obj;
-		if (d.getKind() != Obj.Var)
+		if (d.getKind() != Obj.Var && d.getKind() != Obj.Elem)
 			report_error(stmt.getLine(), "Moguce je ucitati vrednost u promenljivu ili element niza!");
 		if (d.getType() != Table.intType && d.getType() != Table.charType && d.getType() != Table.boolType)
 			report_error(stmt.getLine(), "Promenljiva mora biti tipa int, char ili bool");

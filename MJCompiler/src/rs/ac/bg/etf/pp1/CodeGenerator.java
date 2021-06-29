@@ -48,6 +48,7 @@ import rs.ac.bg.etf.pp1.ast.MethodTypeName;
 import rs.ac.bg.etf.pp1.ast.Minus;
 import rs.ac.bg.etf.pp1.ast.Mod;
 import rs.ac.bg.etf.pp1.ast.Mul;
+import rs.ac.bg.etf.pp1.ast.NegMinus;
 import rs.ac.bg.etf.pp1.ast.NegTerms;
 import rs.ac.bg.etf.pp1.ast.NewFactorArray;
 import rs.ac.bg.etf.pp1.ast.NextAND;
@@ -56,6 +57,7 @@ import rs.ac.bg.etf.pp1.ast.NoCase;
 import rs.ac.bg.etf.pp1.ast.NonVoidMethod;
 import rs.ac.bg.etf.pp1.ast.NotEqual;
 import rs.ac.bg.etf.pp1.ast.NumFactor;
+import rs.ac.bg.etf.pp1.ast.OneFactor;
 import rs.ac.bg.etf.pp1.ast.Plus;
 import rs.ac.bg.etf.pp1.ast.PrintConstStmt;
 import rs.ac.bg.etf.pp1.ast.PrintStmt;
@@ -111,6 +113,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	private Stack<Integer> prevCase = new Stack<>();
 	private Stack<List<Integer>> yieldJump = new Stack<>();
 	private Stack<Integer> fallthroughCases = new Stack<>();
+	boolean neg = false;
 
 	public void visit(ProgName progName) {
 		Obj obj = null;
@@ -428,8 +431,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	// Expr
-	public void visit(NegTerms expr) {
-		Code.put(Code.neg);
+	public void visit(NegMinus expr) {
+		neg = true;
 	}
 
 	// Term
@@ -439,6 +442,13 @@ public class CodeGenerator extends VisitorAdaptor {
 
 	public void visit(FactorList term) {
 		Code.put(operationsStack.pop());
+	}
+	
+	public void visit(OneFactor facotr) {
+		if (neg) {
+			Code.put(Code.neg);
+			neg = false;
+		}
 	}
 	
 	// SwitchExpr

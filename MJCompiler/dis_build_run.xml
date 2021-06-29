@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="MJCompiler" default="disasm" basedir=".">
+<project name="MJCompiler" default="runObj" basedir=".">
 	<target name="disasm">
 		<java classname="rs.etf.pp1.mj.runtime.disasm">
 			<arg value="test/program.obj" />
