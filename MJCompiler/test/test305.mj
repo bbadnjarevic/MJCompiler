@@ -1,0 +1,92 @@
+//Class/Array manipulation tests
+
+program correctSyntax
+
+const bool trueConst = true;
+const bool falseConst = false;
+const int zeroConst = 0;
+const int oneConst = 1;
+
+int negOneVar;
+int twoVar;
+
+const char aCharConst = 'A';
+char bCharGlobalVar;
+
+{
+    void setbGlobalChar() {
+        bCharGlobalVar = 'B';
+    }
+
+    char dCharMethodResult() {
+        return 'D';
+    }
+
+    void main()
+        char cCharLocalVar;
+        char charArray[];
+        int loopOne, loopTwo, loopThree;
+    {
+        cCharLocalVar = 'C';
+        setbGlobalChar();
+
+        negOneVar = -oneConst;
+        twoVar = 2;
+
+        charArray = new char[twoVar * oneConst + oneConst + oneConst];
+
+        charArray[0] = aCharConst;
+        charArray[1] = bCharGlobalVar;
+        charArray[2] = cCharLocalVar;
+        charArray[3] = dCharMethodResult();
+
+        // Expected output [A{B()D()}C{B(AB)D(AB)}D{A(ABC)C(ABC)}]
+        loopOne = 0;
+        print('[');
+        do {
+            if (loopOne == 1) {
+                loopOne++;
+                continue;
+            }
+
+            if (loopOne >= 4) {
+                break;
+            }
+
+            print(charArray[loopOne]);
+
+            print('{');
+            loopTwo = 0;
+            do {
+                // when loopOne is odd skips odd loopTwo elems
+                // otherwise skips even loopTwo elems
+                if ((loopTwo + loopOne) % 2 == 0) {
+                    loopTwo++;
+                    continue;
+                }
+
+                print(charArray[loopTwo]);
+
+                print('(');
+                loopThree = 0;
+                do {
+                    // breaks once loopOne is reached
+                    if (loopThree >= loopOne) break;
+
+                    print(charArray[loopThree]);
+
+                    loopThree++;
+                } while (loopThree < 4);
+                print(')');
+
+                loopTwo++;
+            } while (loopTwo < 4);
+            print('}');
+
+            loopOne++;
+        } while (loopOne < 5);
+        print(']');
+        print(eol);
+    }
+}
+

@@ -1,10 +1,16 @@
 program moiProgram
 {
-	void main() bool i; {
-		if (true) {
-			print('T');
-		} else {
-			print('F');
-		}
+	void main() int i; int j;{
+		i = 0;
+		do {
+			print('|');
+			i++;
+			j = 0;
+			do {
+				print('-');
+				j++;
+			} while (j < 2);
+			
+		} while (i < 4);
 	}
 }

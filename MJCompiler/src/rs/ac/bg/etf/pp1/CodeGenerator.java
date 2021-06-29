@@ -2,12 +2,16 @@ package rs.ac.bg.etf.pp1;
 
 import java.util.Stack;
 
+import javax.xml.stream.events.EndDocument;
+
 import rs.ac.bg.etf.pp1.ast.AfterIf;
 import rs.ac.bg.etf.pp1.ast.Assignement;
 import rs.ac.bg.etf.pp1.ast.BoolFactor;
+import rs.ac.bg.etf.pp1.ast.BreakStmt;
 import rs.ac.bg.etf.pp1.ast.CharFactor;
 import rs.ac.bg.etf.pp1.ast.CondFact1Expr;
 import rs.ac.bg.etf.pp1.ast.CondFact2Expr;
+import rs.ac.bg.etf.pp1.ast.ContinueStmt;
 import rs.ac.bg.etf.pp1.ast.Decrease;
 import rs.ac.bg.etf.pp1.ast.DesignatorActPars;
 import rs.ac.bg.etf.pp1.ast.DesignatorFactor;
@@ -16,6 +20,7 @@ import rs.ac.bg.etf.pp1.ast.DesignatorJustIdent;
 import rs.ac.bg.etf.pp1.ast.DesignatorWithExpr;
 import rs.ac.bg.etf.pp1.ast.Div;
 import rs.ac.bg.etf.pp1.ast.ElemAccess;
+import rs.ac.bg.etf.pp1.ast.EndDoWhile;
 import rs.ac.bg.etf.pp1.ast.Equal;
 import rs.ac.bg.etf.pp1.ast.FactorList;
 import rs.ac.bg.etf.pp1.ast.FuncDesignator;
@@ -23,7 +28,9 @@ import rs.ac.bg.etf.pp1.ast.GreaterThen;
 import rs.ac.bg.etf.pp1.ast.GreaterThenEqual;
 import rs.ac.bg.etf.pp1.ast.Increase;
 import rs.ac.bg.etf.pp1.ast.InitAND;
+import rs.ac.bg.etf.pp1.ast.InitDoWhile;
 import rs.ac.bg.etf.pp1.ast.InitElse;
+import rs.ac.bg.etf.pp1.ast.InitIf;
 import rs.ac.bg.etf.pp1.ast.InitOR;
 import rs.ac.bg.etf.pp1.ast.InitThen;
 import rs.ac.bg.etf.pp1.ast.LessThen;
@@ -52,6 +59,7 @@ import rs.ac.bg.etf.pp1.ast.SyntaxNode;
 import rs.ac.bg.etf.pp1.ast.TermList;
 import rs.ac.bg.etf.pp1.ast.VisitorAdaptor;
 import rs.ac.bg.etf.pp1.ast.VoidMethod;
+import rs.ac.bg.etf.pp1.ast.WhileConditionInit;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.concepts.Obj;
 import rs.etf.pp1.symboltable.concepts.Struct;
@@ -77,14 +85,18 @@ public class CodeGenerator extends VisitorAdaptor {
 		return s.charAt(0);
 	}
 	
-	private enum LogicalOp {
-		AND, OR
+	private enum JumpType {
+		IF, WHILE
 	}
 
 	private Stack<Integer> operationsStack = new Stack<>();
-	private Stack<Integer> skipElsePatch = new Stack<>(); 
-	private Stack<Integer> orElsePatch = new Stack<>();
-	private Stack<Integer> thenPatch = new Stack<>();
+	private Stack<Stack<Integer>> skipElsePatch = new Stack<>(); 
+	private Stack<Stack<Integer>> orElsePatch = new Stack<>();
+	private Stack<Stack<Integer>> thenPatch = new Stack<>();
+	private Stack<Integer> doWhilePc = new Stack<>();
+	private Stack<JumpType> jumpType = new Stack<>();
+	private Stack<Stack<Integer>> continueFixup = new Stack<>();
+	private Stack<Stack<Integer>> breakFixup = new Stack<>();
 
 	public void visit(ProgName progName) {
 		Obj obj = null;
@@ -192,28 +204,67 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	// If
+	public void visit(InitIf init) {
+		jumpType.push(JumpType.IF);
+		thenPatch.push(new Stack<>());
+		orElsePatch.push(new Stack<>());
+		skipElsePatch.push(new Stack<>());
+	}
+	
 	public void visit(InitThen initThen) {
-		for(Integer i: thenPatch)
+		for(Integer i: thenPatch.pop())
 			Code.fixup(i);
-		thenPatch.clear();
 	}
 	public void visit(AfterIf afterIf) {
-		for(Integer i: orElsePatch)
+		for(Integer i: orElsePatch.pop())
 			Code.fixup(i);
-		orElsePatch.clear();
 
-		for(Integer i: skipElsePatch)
+		for(Integer i: skipElsePatch.pop())
 			Code.fixup(i);
-		skipElsePatch.clear();
+		
+		jumpType.pop();
 		
 	}
 	public void visit(InitElse initElse) {
-		for(Integer i: orElsePatch)
+		for(Integer i: orElsePatch.lastElement())
 			Code.fixup(i);
-		orElsePatch.clear();
+		orElsePatch.lastElement().clear();
 	}
 	public void visit(SkipElse skipElse) {
-		skipElsePatch.push(Code.pc + 1);
+		skipElsePatch.lastElement().push(Code.pc + 1);
+		Code.putJump(0);
+	}
+	
+	// DoWhile
+	public void visit(InitDoWhile init) {
+		jumpType.push(JumpType.WHILE);
+		doWhilePc.push(Code.pc);
+		thenPatch.add(new Stack<>());
+		orElsePatch.add(new Stack<>());
+		breakFixup.push(new Stack<>());
+		continueFixup.push(new Stack<>());
+	}
+	public void visit(EndDoWhile end) {
+		Code.putJump(doWhilePc.pop());
+		for(Integer i: orElsePatch.pop())
+			Code.fixup(i);
+		for(Integer i: breakFixup.pop())
+			Code.fixup(i);
+	}
+	public void visit(WhileConditionInit cond) {
+		for(Integer i: continueFixup.pop())
+			Code.fixup(i);
+	}
+	
+	// Continue
+	public void visit(ContinueStmt stmt) {
+		continueFixup.lastElement().push(Code.pc + 1);
+		Code.putJump(0);
+	}
+	
+	// Break
+	public void visit(BreakStmt stmt) {
+		breakFixup.lastElement().push(Code.pc + 1);
 		Code.putJump(0);
 	}
 	
@@ -221,17 +272,21 @@ public class CodeGenerator extends VisitorAdaptor {
 	// Conditions
 	// InitOR
 	public void visit(InitOR initOR) {
-		thenPatch.push(Code.pc + 1);
-		Code.putJump(0);
+		if (jumpType.lastElement().equals(JumpType.IF)) {
+			thenPatch.lastElement().push(Code.pc + 1);
+			Code.putJump(0);
+		} else {
+			Code.putJump(doWhilePc.lastElement());
+		}
 
-		for(Integer i: orElsePatch)
+		for(Integer i: orElsePatch.lastElement())
 			Code.fixup(i);
-		orElsePatch.clear();
+		orElsePatch.lastElement().clear();
 	}
 	public void visit(NextOR nextOR) {
-		for(Integer i: thenPatch)
+		for(Integer i: thenPatch.lastElement())
 			Code.fixup(i);
-		thenPatch.clear();
+		thenPatch.lastElement().clear();
 	}
 
 	// CondFact
@@ -243,7 +298,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		handleCondFact(Code.eq);
 	}
 	private void handleCondFact(int op) {
-		orElsePatch.push(Code.pc + 1);
+		orElsePatch.lastElement().push(Code.pc + 1);
 		Code.putFalseJump(op, 0);
 	}
 	
