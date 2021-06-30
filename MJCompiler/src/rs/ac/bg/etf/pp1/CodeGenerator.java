@@ -129,7 +129,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.return_);
 
 		// ord
-		obj = Table.find("obj");
+		obj = Table.find("ord");
 		obj.setAdr(Code.pc);
 		Code.put(Code.enter);
 		Code.put(1);
